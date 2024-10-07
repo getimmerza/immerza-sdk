@@ -30,6 +30,7 @@ public class ImmerzaSceneBundler : EditorWindow
 
     private ListView scenesView = null;
     private TextField path = null;
+    private TextField scriptsPath = null;
     private EnumField buildTarget = null;
     private Button exportBtn = null;
 
@@ -54,6 +55,7 @@ public class ImmerzaSceneBundler : EditorWindow
 
         scenesView = rootVisualElement.Q<ListView>("SceneList");
         path = rootVisualElement.Q<TextField>("ExportPath");
+        scriptsPath = rootVisualElement.Q<TextField>("ScriptsPath");
         buildTarget = rootVisualElement.Q<EnumField>("PlatformEnum");
         buildTarget.Init(BuildTarget.Android);
         exportBtn = rootVisualElement.Q<Button>("ExportButton");
@@ -120,7 +122,7 @@ public class ImmerzaSceneBundler : EditorWindow
 
         Scene activeScene = EditorSceneManager.OpenScene(newScenePath);
 
-        string[] scriptGUIDs = AssetDatabase.FindAssets("t:MonoScript", new[] { "Assets" });
+        string[] scriptGUIDs = AssetDatabase.FindAssets("t:MonoScript", new[] { scriptsPath.text });
         HashSet<string> validClassNames = new HashSet<string>();
 
         foreach (string scriptGUID in scriptGUIDs)
@@ -141,68 +143,79 @@ public class ImmerzaSceneBundler : EditorWindow
             }
         }
 
-        foreach (GameObject obj in SceneManager.GetActiveScene().GetRootGameObjects())
+        try
         {
-            MonoBehaviour[] scripts = obj.GetComponentsInChildren<MonoBehaviour>(true);
-
-            foreach (MonoBehaviour script in scripts)
+            foreach (GameObject obj in SceneManager.GetActiveScene().GetRootGameObjects())
             {
-                Type classType = script.GetType();
+                MonoBehaviour[] scripts = obj.GetComponentsInChildren<MonoBehaviour>(true);
 
-                if (validClassNames.Contains(classType.Name))
+                foreach (MonoBehaviour script in scripts)
                 {
-                    FieldInfo[] fields = classType.GetFields(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
-                    Dictionary<string, ValueField> values = new Dictionary<string, ValueField>();
+                    Type classType = script.GetType();
 
-                    foreach (FieldInfo field in fields)
+                    if (validClassNames.Contains(classType.Name))
                     {
-                        bool isPublic = field.IsPublic;
-                        bool isSerializedPrivate = field.GetCustomAttribute(typeof(SerializeField)) != null;
+                        FieldInfo[] fields = classType.GetFields(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
+                        Dictionary<string, ValueField> values = new Dictionary<string, ValueField>();
 
-                        if (isPublic || isSerializedPrivate)
+                        foreach (FieldInfo field in fields)
                         {
-                            if (field.FieldType.IsClass)
+                            bool isPublic = field.IsPublic;
+                            bool isSerializedPrivate = field.GetCustomAttribute(typeof(SerializeField)) != null;
+
+                            if (isPublic || isSerializedPrivate)
                             {
-                                UnityEngine.Object fieldData = (UnityEngine.Object)field.GetValue(script);
-
-                                GameObject fieldGameObject = null;
-
-                                if (fieldData is GameObject @object)
+                                if (field.FieldType.IsClass && field.FieldType != typeof(string))
                                 {
-                                    fieldGameObject = @object;
+                                    UnityEngine.Object fieldData = (UnityEngine.Object)field.GetValue(script);
+
+                                    GameObject fieldGameObject = null;
+
+                                    if (fieldData is GameObject @object)
+                                    {
+                                        fieldGameObject = @object;
+                                    }
+                                    else if (fieldData is UnityEngine.Component component)
+                                    {
+                                        fieldGameObject = component.gameObject;
+                                    }
+
+                                    ValueField fieldValue = new ValueField()
+                                    {
+                                        value = ImmerzaUtil.GetHierarchyPath(fieldGameObject),
+                                        type = field.FieldType,
+                                        serializationType = ImmerzaSDK.Types.ValueType.SingleReference
+                                    };
+
+                                    values.Add(field.Name, fieldValue);
                                 }
-                                else if (fieldData is UnityEngine.Component component)
+                                else if (field.FieldType.IsPrimitive)
                                 {
-                                    fieldGameObject = component.gameObject;
+                                    ValueField fieldValue = new ValueField()
+                                    {
+                                        value = JsonConvert.SerializeObject(field.GetValue(script), Formatting.Indented, new JsonSerializerSettings { ReferenceLoopHandling = ReferenceLoopHandling.Error }),
+                                        type = field.FieldType,
+                                        serializationType = ImmerzaSDK.Types.ValueType.SingleValue
+                                    };
+
+                                    values.Add(field.Name, fieldValue);
                                 }
-
-                                ValueField fieldValue = new ValueField()
-                                {
-                                    value = ImmerzaUtil.GetHierarchyPath(fieldGameObject),
-                                    type = field.FieldType,
-                                    serializationType = ImmerzaSDK.Types.ValueType.SingleReference
-                                };
-
-                                values.Add(field.Name, fieldValue);
-                            }
-                            else if (field.FieldType.IsPrimitive)
-                            {
-                                ValueField fieldValue = new ValueField()
-                                {
-                                    value = JsonConvert.SerializeObject(field.GetValue(script), Formatting.Indented, new JsonSerializerSettings { ReferenceLoopHandling = ReferenceLoopHandling.Error }),
-                                    type = field.FieldType,
-                                    serializationType = ImmerzaSDK.Types.ValueType.SingleValue
-                                };
-
-                                values.Add(field.Name, fieldValue);
                             }
                         }
-                    }
 
-                    assetMetadata.AddComponent(ImmerzaUtil.GetHierarchyPath(script.gameObject), classType.Name, values);
-                    DestroyImmediate(script);
+                        assetMetadata.AddComponent(ImmerzaUtil.GetHierarchyPath(script.gameObject), classType.Name, values);
+                        DestroyImmediate(script);
+                    }
                 }
             }
+        }
+        catch (Exception exc)
+        {
+            Debug.LogException(exc);
+            EditorSceneManager.OpenScene(originalScenePath);
+            AssetDatabase.DeleteAsset(newScenePath);
+            AssetDatabase.Refresh();
+            return;
         }
 
         EditorSceneManager.SaveScene(activeScene);
@@ -232,32 +245,43 @@ public class ImmerzaSceneBundler : EditorWindow
 
         sceneMetadata.assetMetaData = assetMetadata;
 
-        sceneMetadata.SaveMetaData(Path.Combine(bundleDir, "immerza_metadata.json"));
-
-        EditorSceneManager.OpenScene(originalScenePath);
-
-        File.Delete(Path.Combine(bundleDir, path.text));
-        File.Delete(Path.Combine(bundleDir, path.text + ".manifest"));
-        File.Delete(Path.Combine(bundleDir, "immerza_scene.manifest"));
-        File.Delete(Path.Combine(bundleDir, "immerza_assets.manifest"));
-
-        string archivePath = Path.Combine(bundleDir, "immerza_data.bundle");
-
-        if (File.Exists(archivePath))
+        try
         {
-            File.Delete(archivePath);
-        }
+            sceneMetadata.SaveMetaData(Path.Combine(bundleDir, "immerza_metadata.json"));
 
-        using (Stream stream = File.OpenWrite(archivePath))
-        using (IWriter writer = WriterFactory.Open(stream, ArchiveType.Tar, SharpCompress.Common.CompressionType.GZip))
+            EditorSceneManager.OpenScene(originalScenePath);
+
+            File.Delete(Path.Combine(bundleDir, path.text));
+            File.Delete(Path.Combine(bundleDir, path.text + ".manifest"));
+            File.Delete(Path.Combine(bundleDir, "immerza_scene.manifest"));
+            File.Delete(Path.Combine(bundleDir, "immerza_assets.manifest"));
+
+            string archivePath = Path.Combine(bundleDir, "immerza_data.bundle");
+
+            if (File.Exists(archivePath))
+            {
+                File.Delete(archivePath);
+            }
+
+            using (Stream stream = File.OpenWrite(archivePath))
+            using (IWriter writer = WriterFactory.Open(stream, ArchiveType.Tar, SharpCompress.Common.CompressionType.GZip))
+            {
+                writer.Write("immerza_scene.bundle", Path.Combine(bundleDir, "immerza_scene"));
+                writer.Write("immerza_assets.bundle", Path.Combine(bundleDir, "immerza_assets"));
+            }
+
+
+            File.Delete(Path.Combine(bundleDir, "immerza_scene"));
+            File.Delete(Path.Combine(bundleDir, "immerza_assets"));
+        } 
+        catch (Exception exc) 
         {
-            writer.Write("immerza_scene.bundle", Path.Combine(bundleDir, "immerza_scene"));
-            writer.Write("immerza_assets.bundle", Path.Combine(bundleDir, "immerza_assets"));
+            Debug.LogException(exc);
+            EditorSceneManager.OpenScene(originalScenePath);
+            AssetDatabase.DeleteAsset(newScenePath);
+            AssetDatabase.DeleteAsset(assemblyAssetPath);
+            return;
         }
-
-
-        File.Delete(Path.Combine(bundleDir, "immerza_scene"));
-        File.Delete(Path.Combine(bundleDir, "immerza_assets"));
 
         AssetDatabase.DeleteAsset(newScenePath);
         AssetDatabase.DeleteAsset(assemblyAssetPath);
