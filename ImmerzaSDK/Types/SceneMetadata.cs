@@ -1,14 +1,15 @@
 ﻿using Newtonsoft.Json;
+using System;
 using System.IO;
 
 namespace ImmerzaSDK.Types
 {
     public class SceneMetadata
     {
-        [JsonProperty("scene_name")]
-        public string sceneName;
-        [JsonProperty("scene_version")]
-        public string sceneVersion;
+        [JsonProperty("scene_id")]
+        public string sceneID;
+        [JsonProperty("hash")]
+        public uint hash;
 
         [JsonProperty("asset_metadata")]
         public AssetMetadata assetMetaData;

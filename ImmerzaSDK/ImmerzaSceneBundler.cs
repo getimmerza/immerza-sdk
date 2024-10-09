@@ -13,6 +13,7 @@ using System.Reflection;
 using Newtonsoft.Json;
 using ImmerzaSDK.Types;
 using ImmerzaSDK.Util;
+using SharpCompress.Archives;
 
 public enum ComponentValueType
 {
@@ -32,7 +33,9 @@ public class ImmerzaSceneBundler : EditorWindow
     private TextField path = null;
     private TextField scriptsPath = null;
     private EnumField buildTarget = null;
+    private Button setupBtn = null;
     private Button exportBtn = null;
+    private Label successLabel = null;
 
     [MenuItem("Immerza/Scene Bundler")]
     public static void ShowSceneBundler()
@@ -58,11 +61,16 @@ public class ImmerzaSceneBundler : EditorWindow
         scriptsPath = rootVisualElement.Q<TextField>("ScriptsPath");
         buildTarget = rootVisualElement.Q<EnumField>("PlatformEnum");
         buildTarget.Init(BuildTarget.Android);
+        setupBtn = rootVisualElement.Q<Button>("SetupButton");
+        setupBtn.SetEnabled(false);
+        setupBtn.style.backgroundColor = new UnityEngine.Color(0.2f, 0.2f, 0.2f);
+        setupBtn.style.color = new UnityEngine.Color(0.3f, 0.3f, 0.3f);
         exportBtn = rootVisualElement.Q<Button>("ExportButton");
         exportBtn.SetEnabled(false);
         exportBtn.style.backgroundColor = new UnityEngine.Color(0.2f, 0.2f, 0.2f);
         exportBtn.style.color = new UnityEngine.Color(0.3f, 0.3f, 0.3f);
-
+        successLabel = rootVisualElement.Q<Label>("SuccessLabel");
+        successLabel.visible = false;
 
         string[] allSceneGuids = AssetDatabase.FindAssets("t:SceneAsset", new[] { "Assets" });
         List<SceneAsset> allScenes = new List<SceneAsset>();
@@ -77,6 +85,7 @@ public class ImmerzaSceneBundler : EditorWindow
         scenesView.itemsSource = allScenes;
 
         scenesView.selectionChanged += SceneSelected;
+        setupBtn.clicked += SetupScene;
         exportBtn.clicked += ExportScene;
     }
 
@@ -90,6 +99,36 @@ public class ImmerzaSceneBundler : EditorWindow
 
         sceneToExport = scene;
 
+        if (File.Exists(Path.Combine(Path.GetDirectoryName(Application.dataPath), scriptsPath.text, scene.name + ".asmdef")))
+        {
+            exportBtn.SetEnabled(true);
+            exportBtn.style.backgroundColor = new UnityEngine.Color(0.4f, 0.4f, 0.4f);
+            exportBtn.style.color = new UnityEngine.Color(1.0f, 1.0f, 1.0f);
+
+            setupBtn.SetEnabled(false);
+            setupBtn.style.backgroundColor = new UnityEngine.Color(0.2f, 0.2f, 0.2f);
+            setupBtn.style.color = new UnityEngine.Color(0.3f, 0.3f, 0.3f);
+        }
+        else
+        {
+            exportBtn.SetEnabled(false);
+            exportBtn.style.backgroundColor = new UnityEngine.Color(0.2f, 0.2f, 0.2f);
+            exportBtn.style.color = new UnityEngine.Color(0.3f, 0.3f, 0.3f);
+
+            setupBtn.SetEnabled(true);
+            setupBtn.style.backgroundColor = new UnityEngine.Color(0.4f, 0.4f, 0.4f);
+            setupBtn.style.color = new UnityEngine.Color(1.0f, 1.0f, 1.0f);
+        }
+    }
+
+    private void SetupScene()
+    {
+        CreateAssemblyDefinition(sceneToExport.name, Path.Combine(Path.GetDirectoryName(Application.dataPath), scriptsPath.text, sceneToExport.name + ".asmdef"), Path.Combine(scriptsPath.text, sceneToExport.name + ".asmdef"));
+
+        setupBtn.SetEnabled(false);
+        setupBtn.style.backgroundColor = new UnityEngine.Color(0.2f, 0.2f, 0.2f);
+        setupBtn.style.color = new UnityEngine.Color(0.3f, 0.3f, 0.3f);
+
         exportBtn.SetEnabled(true);
         exportBtn.style.backgroundColor = new UnityEngine.Color(0.4f, 0.4f, 0.4f);
         exportBtn.style.color = new UnityEngine.Color(1.0f, 1.0f, 1.0f);
@@ -97,15 +136,13 @@ public class ImmerzaSceneBundler : EditorWindow
 
     private void ExportScene()
     {
+        ImmerzaUtil.PrecomputeHashTable();
+
         EditorSceneManager.OpenScene(AssetDatabase.GetAssetPath(sceneToExport));
 
         string bundleDir = Path.Combine(Path.GetDirectoryName(Application.dataPath), path.text);
 
-        SceneMetadata sceneMetadata = new SceneMetadata()
-        {
-            sceneName = "*",
-            sceneVersion = "*"
-        };
+        SceneMetadata sceneMetadata = new SceneMetadata();
 
         AssetMetadata assetMetadata = new AssetMetadata();
 
@@ -215,6 +252,7 @@ public class ImmerzaSceneBundler : EditorWindow
             EditorSceneManager.OpenScene(originalScenePath);
             AssetDatabase.DeleteAsset(newScenePath);
             AssetDatabase.Refresh();
+            SetSuccessMsg(false);
             return;
         }
 
@@ -225,8 +263,8 @@ public class ImmerzaSceneBundler : EditorWindow
         string scenePath = activeScene.path;
         assetMetadata.AddAsset("ImmerzaScene", scenePath);
 
-        string assemblyAssetPath = "Assets/Assembly-CSharp.txt";
-        string assemblyPath = Path.Combine(Path.GetDirectoryName(Application.dataPath), "Library", "ScriptAssemblies/Assembly-CSharp.dll");
+        string assemblyAssetPath = Path.Combine(scriptsPath.text, sceneToExport.name + ".txt");
+        string assemblyPath = Path.Combine(Path.GetDirectoryName(Application.dataPath), "Library", "ScriptAssemblies", sceneToExport.name + ".dll");
         File.Copy(assemblyPath, assemblyAssetPath);
         AssetDatabase.ImportAsset(assemblyAssetPath);
         AssetDatabase.Refresh();
@@ -247,8 +285,6 @@ public class ImmerzaSceneBundler : EditorWindow
 
         try
         {
-            sceneMetadata.SaveMetaData(Path.Combine(bundleDir, "immerza_metadata.json"));
-
             EditorSceneManager.OpenScene(originalScenePath);
 
             File.Delete(Path.Combine(bundleDir, path.text));
@@ -270,22 +306,90 @@ public class ImmerzaSceneBundler : EditorWindow
                 writer.Write("immerza_assets.bundle", Path.Combine(bundleDir, "immerza_assets"));
             }
 
-
             File.Delete(Path.Combine(bundleDir, "immerza_scene"));
             File.Delete(Path.Combine(bundleDir, "immerza_assets"));
-        } 
-        catch (Exception exc) 
+
+            uint crc = 0xffffffff;
+            int bufferSize = 4096;
+            byte[] buffer = new byte[bufferSize];
+
+            /*using (FileStream stream = new FileStream(
+                archivePath, 
+                FileMode.Open, 
+                FileAccess.Read, 
+                FileShare.Read, 
+                bufferSize, 
+                FileOptions.SequentialScan
+            ))
+            {
+                int bytesRead;
+
+                while ((bytesRead = stream.Read(buffer, 0, bufferSize)) > 0)
+                {
+                    crc = ImmerzaUtil.CalculateCrc32(buffer.AsSpan(0, bytesRead), crc);
+                }
+            }*/
+
+            byte[] data = File.ReadAllBytes(archivePath);
+
+            crc = ImmerzaUtil.CalculateCrc32(data, crc);
+
+            crc = ~crc;
+
+            sceneMetadata.hash = crc;
+            sceneMetadata.sceneID = "0";
+            sceneMetadata.SaveMetaData(Path.Combine(bundleDir, "immerza_metadata.json"));
+        }
+        catch (Exception exc)
         {
             Debug.LogException(exc);
             EditorSceneManager.OpenScene(originalScenePath);
             AssetDatabase.DeleteAsset(newScenePath);
             AssetDatabase.DeleteAsset(assemblyAssetPath);
+            SetSuccessMsg(false);
             return;
         }
 
         AssetDatabase.DeleteAsset(newScenePath);
         AssetDatabase.DeleteAsset(assemblyAssetPath);
+        SetSuccessMsg(true);
+    }
 
-        UnityEngine.Debug.Log("Scene exported successfully.");
+    private static void CreateAssemblyDefinition(string name, string path, string assetPath)
+    {
+        string asmdefContent = $@"
+        {{
+            ""name"": ""{name}"",
+            ""references"": [],
+            ""includePlatforms"": [],
+            ""excludePlatforms"": [],
+            ""allowUnsafeCode"": false,
+            ""overrideReferences"": false,
+            ""precompiledReferences"": [],
+            ""autoReferenced"": true,
+            ""defineConstraints"": [],
+            ""versionDefines"": [],
+            ""noEngineReferences"": false
+        }}";
+
+
+        File.WriteAllText(path, asmdefContent);
+        AssetDatabase.ImportAsset(assetPath);
+        AssetDatabase.Refresh();
+    }
+
+    private void SetSuccessMsg(bool success)
+    {
+        successLabel.visible = true;
+        if (success)
+        {
+            successLabel.style.color = new Color(0.36f, 1.0f, 0.36f);
+            successLabel.text = "Scene successfully exported.";
+        }
+        else
+        {
+            successLabel.style.color = new Color(1.0f, 0.36f, 0.36f);
+            successLabel.text = "Scene export failed.";
+        }
     }
 }
