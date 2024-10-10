@@ -136,7 +136,7 @@ public class ImmerzaSceneBundler : EditorWindow
 
     private void ExportScene()
     {
-        ImmerzaUtil.PrecomputeHashTable();
+        ImmerzaUtil.InitCrcTable();
 
         EditorSceneManager.OpenScene(AssetDatabase.GetAssetPath(sceneToExport));
 
@@ -306,39 +306,22 @@ public class ImmerzaSceneBundler : EditorWindow
                 writer.Write("immerza_assets.bundle", Path.Combine(bundleDir, "immerza_assets"));
             }
 
-            File.Delete(Path.Combine(bundleDir, "immerza_scene"));
-            File.Delete(Path.Combine(bundleDir, "immerza_assets"));
+            byte[] dataScene = File.ReadAllBytes(Path.Combine(bundleDir, "immerza_scene"));
+            byte[] dataAssets= File.ReadAllBytes(Path.Combine(bundleDir, "immerza_assets"));
+
+            byte[] combined = new byte[dataScene.Length + dataAssets.Length];
+            Buffer.BlockCopy(dataScene, 0, combined, 0, dataScene.Length);
+            Buffer.BlockCopy(dataAssets, 0, combined, dataScene.Length, dataAssets.Length);
 
             uint crc = 0xffffffff;
-            int bufferSize = 4096;
-            byte[] buffer = new byte[bufferSize];
-
-            /*using (FileStream stream = new FileStream(
-                archivePath, 
-                FileMode.Open, 
-                FileAccess.Read, 
-                FileShare.Read, 
-                bufferSize, 
-                FileOptions.SequentialScan
-            ))
-            {
-                int bytesRead;
-
-                while ((bytesRead = stream.Read(buffer, 0, bufferSize)) > 0)
-                {
-                    crc = ImmerzaUtil.CalculateCrc32(buffer.AsSpan(0, bytesRead), crc);
-                }
-            }*/
-
-            byte[] data = File.ReadAllBytes(archivePath);
-
-            crc = ImmerzaUtil.CalculateCrc32(data, crc);
-
-            crc = ~crc;
+            crc = ImmerzaUtil.ComputeChecksum(combined);
 
             sceneMetadata.hash = crc;
             sceneMetadata.sceneID = "0";
             sceneMetadata.SaveMetaData(Path.Combine(bundleDir, "immerza_metadata.json"));
+
+            File.Delete(Path.Combine(bundleDir, "immerza_scene"));
+            File.Delete(Path.Combine(bundleDir, "immerza_assets"));
         }
         catch (Exception exc)
         {

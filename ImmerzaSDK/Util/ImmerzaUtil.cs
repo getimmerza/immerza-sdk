@@ -18,37 +18,40 @@ namespace ImmerzaSDK.Util
             return path;
         }
 
-        public static void PrecomputeHashTable()
+        static uint[] table;
+
+        public static uint ComputeChecksum(byte[] bytes)
         {
-            const uint polynomial = 0xEDB88320;
-            for (uint i = 0; i < 256; i++)
+            uint crc = 0xffffffff;
+            for (int i = 0; i < bytes.Length; ++i)
             {
-                uint crc = i;
-                for (uint j = 8; j > 0; j--)
+                byte index = (byte)(((crc) & 0xff) ^ bytes[i]);
+                crc = (uint)((crc >> 8) ^ table[index]);
+            }
+            return ~crc;
+        }
+
+        public static void InitCrcTable()
+        {
+            uint poly = 0xedb88320;
+            table = new uint[256];
+            uint temp = 0;
+            for (uint i = 0; i < table.Length; ++i)
+            {
+                temp = i;
+                for (int j = 8; j > 0; --j)
                 {
-                    if ((crc & 1) == 1)
+                    if ((temp & 1) == 1)
                     {
-                        crc = (crc >> 1) ^ polynomial;
+                        temp = (uint)((temp >> 1) ^ poly);
                     }
                     else
                     {
-                        crc >>= 1;
+                        temp >>= 1;
                     }
                 }
-                Crc32Table[i] = crc;
+                table[i] = temp;
             }
         }
-
-        public static uint CalculateCrc32(ReadOnlySpan<byte> data, uint crc)
-        {
-            for (int i = 0; i < data.Length; i++)
-            {
-                byte index = (byte)((crc & 0xFF) ^ data[i]);
-                crc = (crc >> 8) ^ Crc32Table[index];
-            }
-            return crc;
-        }
-
-        static readonly uint[] Crc32Table = new uint[256];
     }
 }
