@@ -263,7 +263,7 @@ public class ImmerzaSceneBundler : EditorWindow
         string scenePath = activeScene.path;
         assetMetadata.AddAsset("ImmerzaScene", scenePath);
 
-        string assemblyAssetPath = Path.Combine(scriptsPath.text, sceneToExport.name + ".txt");
+        string assemblyAssetPath = scriptsPath.text + "/" + sceneToExport.name + ".txt";
         string assemblyPath = Path.Combine(Path.GetDirectoryName(Application.dataPath), "Library", "ScriptAssemblies", sceneToExport.name + ".dll");
         File.Copy(assemblyPath, assemblyAssetPath);
         AssetDatabase.ImportAsset(assemblyAssetPath);
