@@ -1,0 +1,9 @@
+<linker>
+  <assembly fullname="UnityEngine">
+    <type fullname="*" preserve="all" />
+  </assembly>
+
+  <assembly fullname="mscorlib">
+    <type fullname="*" preserve="all"/>
+  </assembly>
+</linker>
