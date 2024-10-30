@@ -1,4 +1,4 @@
-# immerza-scenes
+# immerza-sdk
 
 ## Roadmap
 ### Implemented
@@ -10,12 +10,12 @@
     - Asset references
 - Runtime loading of contributor uploaded assembly
 - Restriction of namespace access for security
-- Restriction to PInvoke other processes for security 
+- Restriction to PInvoke other processes for security
+- Generic method override support
 
 ### To-Do
 - Contributor site support
 - Caching
-- Generic method override support
 - Custom metadata
     - Array references and array values
     - Scriptable Objects
