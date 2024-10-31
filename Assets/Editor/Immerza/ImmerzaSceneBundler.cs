@@ -115,15 +115,10 @@ public class ImmerzaSceneBundler : EditorWindow
 
     private void SetupScene()
     {
-        CreateAssemblyDefinition(sceneToExport.name, Path.Combine(Path.GetDirectoryName(Application.dataPath), scriptsPath.text, sceneToExport.name + ".asmdef"), Path.Combine(scriptsPath.text, sceneToExport.name + ".asmdef"));
+        string baseCompilerPath = Path.Combine(EditorApplication.applicationContentsPath, "MonoBleedingEdge/lib/mono/msbuild/Current/bin/Roslyn/csc.exe");
+        Debug.Log(baseCompilerPath);
 
-        setupBtn.SetEnabled(false);
-        setupBtn.style.backgroundColor = new UnityEngine.Color(0.2f, 0.2f, 0.2f);
-        setupBtn.style.color = new UnityEngine.Color(0.3f, 0.3f, 0.3f);
-
-        exportBtn.SetEnabled(true);
-        exportBtn.style.backgroundColor = new UnityEngine.Color(0.4f, 0.4f, 0.4f);
-        exportBtn.style.color = new UnityEngine.Color(1.0f, 1.0f, 1.0f);
+        System.Diagnostics.Process.Start(baseCompilerPath);
     }
 
     private void ExportScene()

@@ -14,6 +14,8 @@ using System.Reflection;
 
 public class SceneLoader : MonoBehaviour
 {
+    [SerializeField] private TextAsset dll;
+
     private dotnow.AppDomain domain = null;
 
     private IEnumerable<Type> types = null;
@@ -38,14 +40,8 @@ public class SceneLoader : MonoBehaviour
 
     public void LoadAssemblies()
     {
-        foreach (var assembly in AppDomain.CurrentDomain.GetAssemblies())
-        {
-            AssemblyName name = assembly.GetName();
-            if (name.Name == "mscorlib" || name.Name == "UnityEngine")
-            {
-                domain.LoadModule(assembly.Location, false);
-            }
-        }
+        CLRModule module = domain.LoadModuleStream(new MemoryStream(dll.bytes), false);
+        Debug.Log(module.AssemblyName.FullName);
     }
 
     IEnumerator DownloadScene()
@@ -132,8 +128,9 @@ public class SceneLoader : MonoBehaviour
         }
 
 
-        CLRModule module = domain.LoadModuleStream(new MemoryStream(playerAssembly.bytes), false);
+       
         
+        /*
         Dictionary<string, ComponentData> componentData = sceneData.assetMetaData.componentTable;
 
         List<object> proxyList = new();
@@ -192,7 +189,7 @@ public class SceneLoader : MonoBehaviour
                     //prox.Fields[field.Key] = Convert.ChangeType(field.Value.value, field.Value.type);
                 }
             }
-        }
+        }*/
     }
 
     private static string GetGameObjectPath(GameObject obj)
