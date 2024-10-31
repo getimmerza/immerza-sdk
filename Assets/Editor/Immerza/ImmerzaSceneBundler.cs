@@ -23,9 +23,11 @@ public class ImmerzaSceneBundler : EditorWindow
     private TextField path = null;
     private TextField scriptsPath = null;
     private EnumField buildTarget = null;
-    private Button setupBtn = null;
     private Button exportBtn = null;
     private Label successLabel = null;
+
+    private string dotnetPath = Path.Combine(EditorApplication.applicationContentsPath, "NetCoreRuntime/dotnet.exe");
+    private string sceneCachePath = Path.Combine(Path.GetDirectoryName(Application.dataPath), "ImmerzaSceneCache");
 
     [MenuItem("Immerza/Scene Bundler")]
     public static void ShowSceneBundler()
@@ -53,10 +55,6 @@ public class ImmerzaSceneBundler : EditorWindow
         scriptsPath = root.Q<TextField>("ScriptsPath");
         buildTarget = root.Q<EnumField>("PlatformEnum");
         buildTarget.Init(BuildTarget.Android);
-        setupBtn = root.Q<Button>("SetupButton");
-        setupBtn.SetEnabled(false);
-        setupBtn.style.backgroundColor = new UnityEngine.Color(0.2f, 0.2f, 0.2f);
-        setupBtn.style.color = new UnityEngine.Color(0.3f, 0.3f, 0.3f);
         exportBtn = root.Q<Button>("ExportButton");
         exportBtn.SetEnabled(false);
         exportBtn.style.backgroundColor = new UnityEngine.Color(0.2f, 0.2f, 0.2f);
@@ -77,7 +75,6 @@ public class ImmerzaSceneBundler : EditorWindow
         scenesView.itemsSource = allScenes;
 
         scenesView.selectionChanged += SceneSelected;
-        setupBtn.clicked += SetupScene;
         exportBtn.clicked += ExportScene;
     }
 
@@ -91,36 +88,6 @@ public class ImmerzaSceneBundler : EditorWindow
 
         sceneToExport = scene;
 
-        if (File.Exists(Path.Combine(Path.GetDirectoryName(Application.dataPath), scriptsPath.text, scene.name + ".asmdef")))
-        {
-            exportBtn.SetEnabled(true);
-            exportBtn.style.backgroundColor = new UnityEngine.Color(0.4f, 0.4f, 0.4f);
-            exportBtn.style.color = new UnityEngine.Color(1.0f, 1.0f, 1.0f);
-
-            setupBtn.SetEnabled(false);
-            setupBtn.style.backgroundColor = new UnityEngine.Color(0.2f, 0.2f, 0.2f);
-            setupBtn.style.color = new UnityEngine.Color(0.3f, 0.3f, 0.3f);
-        }
-        else
-        {
-            exportBtn.SetEnabled(false);
-            exportBtn.style.backgroundColor = new UnityEngine.Color(0.2f, 0.2f, 0.2f);
-            exportBtn.style.color = new UnityEngine.Color(0.3f, 0.3f, 0.3f);
-
-            setupBtn.SetEnabled(true);
-            setupBtn.style.backgroundColor = new UnityEngine.Color(0.4f, 0.4f, 0.4f);
-            setupBtn.style.color = new UnityEngine.Color(1.0f, 1.0f, 1.0f);
-        }
-    }
-
-    private void SetupScene()
-    {
-        CreateAssemblyDefinition(sceneToExport.name, Path.Combine(Path.GetDirectoryName(Application.dataPath), scriptsPath.text, sceneToExport.name + ".asmdef"), Path.Combine(scriptsPath.text, sceneToExport.name + ".asmdef"));
-
-        setupBtn.SetEnabled(false);
-        setupBtn.style.backgroundColor = new UnityEngine.Color(0.2f, 0.2f, 0.2f);
-        setupBtn.style.color = new UnityEngine.Color(0.3f, 0.3f, 0.3f);
-
         exportBtn.SetEnabled(true);
         exportBtn.style.backgroundColor = new UnityEngine.Color(0.4f, 0.4f, 0.4f);
         exportBtn.style.color = new UnityEngine.Color(1.0f, 1.0f, 1.0f);
@@ -128,6 +95,8 @@ public class ImmerzaSceneBundler : EditorWindow
 
     private void ExportScene()
     {
+        CompileAssembly();
+
         ImmerzaUtil.InitCrcTable();
 
         EditorSceneManager.OpenScene(AssetDatabase.GetAssetPath(sceneToExport));
@@ -240,7 +209,7 @@ public class ImmerzaSceneBundler : EditorWindow
         }
         catch (Exception exc)
         {
-            Debug.LogException(exc);
+            UnityEngine.Debug.LogException(exc);
             EditorSceneManager.OpenScene(originalScenePath);
             AssetDatabase.DeleteAsset(newScenePath);
             AssetDatabase.Refresh();
@@ -255,8 +224,8 @@ public class ImmerzaSceneBundler : EditorWindow
         string scenePath = activeScene.path;
         assetMetadata.AddAsset("ImmerzaScene", scenePath);
 
-        string assemblyAssetPath = scriptsPath.text + "/" + sceneToExport.name + ".txt";
-        string assemblyPath = Path.Combine(Path.GetDirectoryName(Application.dataPath), "Library", "ScriptAssemblies", sceneToExport.name + ".dll");
+        string assemblyAssetPath = scriptsPath.text + "/" + sceneToExport.name + ".dll.txt";
+        string assemblyPath = Path.Combine(sceneCachePath, sceneToExport.name, sceneToExport.name + ".dll");
         File.Copy(assemblyPath, assemblyAssetPath);
         AssetDatabase.ImportAsset(assemblyAssetPath);
         AssetDatabase.Refresh();
@@ -317,7 +286,7 @@ public class ImmerzaSceneBundler : EditorWindow
         }
         catch (Exception exc)
         {
-            Debug.LogException(exc);
+            UnityEngine.Debug.LogException(exc);
             EditorSceneManager.OpenScene(originalScenePath);
             AssetDatabase.DeleteAsset(newScenePath);
             AssetDatabase.DeleteAsset(assemblyAssetPath);
@@ -330,27 +299,59 @@ public class ImmerzaSceneBundler : EditorWindow
         SetSuccessMsg(true);
     }
 
-    private static void CreateAssemblyDefinition(string name, string path, string assetPath)
+    private void CompileAssembly()
     {
-        string asmdefContent = $@"
-        {{
-            ""name"": ""{name}"",
-            ""references"": [],
-            ""includePlatforms"": [],
-            ""excludePlatforms"": [],
-            ""allowUnsafeCode"": false,
-            ""overrideReferences"": false,
-            ""precompiledReferences"": [],
-            ""autoReferenced"": true,
-            ""defineConstraints"": [],
-            ""versionDefines"": [],
-            ""noEngineReferences"": false
-        }}";
+        if (!Directory.Exists(Path.Combine(sceneCachePath, sceneToExport.name)))
+        {
+            Directory.CreateDirectory(Path.Combine(sceneCachePath, sceneToExport.name));
+        }
+
+        CreateProjectFile(Path.Combine(sceneCachePath, sceneToExport.name, sceneToExport.name + ".csproj"));
+
+        ImmerzaUtil.CopyDirectory(
+            Path.Combine(Path.GetDirectoryName(Application.dataPath), scriptsPath.text), 
+            Path.Combine(sceneCachePath, sceneToExport.name)
+        );
+
+        System.Diagnostics.ProcessStartInfo processInfo = new()
+        {
+            CreateNoWindow = false,
+            UseShellExecute = false,
+            FileName = dotnetPath,
+            WindowStyle = System.Diagnostics.ProcessWindowStyle.Normal,
+
+            Arguments = $"build {Path.Combine(sceneCachePath, sceneToExport.name, sceneToExport.name + ".csproj")}"
+        };
 
 
-        File.WriteAllText(path, asmdefContent);
-        AssetDatabase.ImportAsset(assetPath);
-        AssetDatabase.Refresh();
+        System.Diagnostics.Process.Start(processInfo);
+    }
+
+    private static void CreateProjectFile(string path)
+    {
+        string unityAssembliesPath = Path.Combine(EditorApplication.applicationContentsPath, "Managed", "*.dll");
+        string generalAssembliesPath = Path.Combine(EditorApplication.applicationContentsPath, "UnityReferenceAssemblies", "unity-4.8-api", "*.dll");
+        string packageAssembliesPath = Path.Combine(Path.GetDirectoryName(Application.dataPath), "Library", "ScriptAssemblies", "*.dll");
+
+        string msbuildProj = // Unity uses C# 9, so there is no raw string interpolation (C# 11). That makes is very unpleasing to retain string structure.
+$@"<Project Sdk='Microsoft.NET.Sdk'>
+    <PropertyGroup>
+        <OutputType>Library</OutputType>
+        <TargetFramework>netstandard2.1</TargetFramework>
+        <Configuration>Release</Configuration>
+        <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+        <AppendRuntimeIdentifierToOutputPath>false</AppendRuntimeIdentifierToOutputPath>
+        <OutputPath>./</OutputPath>
+    </PropertyGroup>
+    <ItemGroup>
+        <Reference Include=""{unityAssembliesPath}""><Private>false</Private></Reference>
+        <Reference Include=""{generalAssembliesPath}""><Private>false</Private></Reference>
+        <Reference Include=""{packageAssembliesPath}""><Private>false</Private></Reference>
+    </ItemGroup>
+</Project>
+        ";
+
+        File.WriteAllText(path, msbuildProj);
     }
 
     private void SetSuccessMsg(bool success)

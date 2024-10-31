@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Buffers.Binary;
+using System.IO;
 using UnityEngine;
 
 namespace ImmerzaSDK.Util
@@ -51,6 +52,19 @@ namespace ImmerzaSDK.Util
                     }
                 }
                 table[i] = temp;
+            }
+        }
+
+        public static void CopyDirectory(string sourcePath, string targetPath)
+        {
+            foreach (string dirPath in Directory.GetDirectories(sourcePath, "*", SearchOption.AllDirectories))
+            {
+                Directory.CreateDirectory(dirPath.Replace(sourcePath, targetPath));
+            }
+
+            foreach (string newPath in Directory.GetFiles(sourcePath, "*.*", SearchOption.AllDirectories))
+            {
+                File.Copy(newPath, newPath.Replace(sourcePath, targetPath), true);
             }
         }
     }

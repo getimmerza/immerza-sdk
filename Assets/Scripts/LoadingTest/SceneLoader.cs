@@ -11,9 +11,12 @@ using ImmerzaSDK.Types;
 using dotnow.Reflection;
 using Newtonsoft.Json;
 using System.Reflection;
+using dotnow;
 
 public class SceneLoader : MonoBehaviour
 {
+    [SerializeField] private TextAsset dll;
+
     private dotnow.AppDomain domain = null;
 
     private IEnumerable<Type> types = null;
@@ -38,14 +41,7 @@ public class SceneLoader : MonoBehaviour
 
     public void LoadAssemblies()
     {
-        foreach (var assembly in AppDomain.CurrentDomain.GetAssemblies())
-        {
-            AssemblyName name = assembly.GetName();
-            if (name.Name == "mscorlib" || name.Name == "UnityEngine")
-            {
-                domain.LoadModule(assembly.Location, false);
-            }
-        }
+        
     }
 
     IEnumerator DownloadScene()
@@ -131,12 +127,12 @@ public class SceneLoader : MonoBehaviour
             Debug.LogError("No Assembly found!");
         }
 
-
         CLRModule module = domain.LoadModuleStream(new MemoryStream(playerAssembly.bytes), false);
+
         
         Dictionary<string, ComponentData> componentData = sceneData.assetMetaData.componentTable;
 
-        List<object> proxyList = new();
+        List<CLRInstance> proxyList = new();
         List<GameObject> proxyGoList = new();
 
         foreach (KeyValuePair<string, ComponentData> data in componentData)
@@ -156,41 +152,45 @@ public class SceneLoader : MonoBehaviour
                 .Where(t => t.Name == compData.className)
                 .FirstOrDefault();
 
-            Debug.Log(type.Name);
-
-            object instance = OverrideBindings.AddComponentOverride(domain, null, curGameObject, new object[] { type });
+            CLRInstance instance = (CLRInstance)OverrideBindings.AddComponentOverride(domain, null, curGameObject, new object[] { type });
             proxyList.Add(instance);
             proxyGoList.Add(curGameObject);
         }
 
         for (int i = 0; i < proxyList.Count; i++)
         {
-            object prox = proxyList[i];
+            CLRInstance prox = proxyList[i];
             string pathToGameObject = GetGameObjectPath(proxyGoList[i]);
 
             Dictionary<string, ValueField> fields = componentData[pathToGameObject].fields;
+            List<CLRField> clrFieldList = prox.GetCLRInterpretedType().GetInstanceFields(); // this is bad, need to ask developer, how to directly access fields
+            clrFieldList.Reverse();
+            int clrFieldIndex = 0;
 
             foreach (KeyValuePair<string, ValueField> field in fields)
             {
+                Debug.Log(clrFieldList[clrFieldIndex].Name);
                 if (field.Value.serializationType == ImmerzaSDK.Types.ValueType.SingleReference)
                 {
                     if (field.Value.type == typeof(GameObject))
                     {
-                        prox.GetType().GetField(field.Key).SetValue(prox, GameObject.Find(field.Value.value));
+                        prox.SetFieldValue(clrFieldList[clrFieldIndex], GameObject.Find(field.Value.value));
                         //prox.Fields[field.Key] = GameObject.Find(field.Value.value);
                     }
                     else
                     {
-                        prox.GetType().GetField(field.Key).SetValue(prox, GameObject.Find(field.Value.value).GetComponent(field.Value.type));
+                        prox.SetFieldValue(clrFieldList[clrFieldIndex], GameObject.Find(field.Value.value).GetComponent(field.Value.type));
                         //prox.Fields[field.Key] = GameObject.Find(field.Value.value).GetComponent(field.Value.type);
                     }
                 }
                 else if (field.Value.serializationType == ImmerzaSDK.Types.ValueType.SingleValue)
                 {
-                    prox.GetType().GetField(field.Key).SetValue(prox, Convert.ChangeType(field.Value.value, field.Value.type));
+                    prox.SetFieldValue(clrFieldList[clrFieldIndex], Convert.ChangeType(field.Value.value, field.Value.type));
 
                     //prox.Fields[field.Key] = Convert.ChangeType(field.Value.value, field.Value.type);
                 }
+
+                clrFieldIndex++;
             }
         }
     }
