@@ -12,11 +12,10 @@ using dotnow.Reflection;
 using Newtonsoft.Json;
 using System.Reflection;
 using dotnow;
+using Mono.Cecil;
 
 public class SceneLoader : MonoBehaviour
 {
-    [SerializeField] private TextAsset dll;
-
     private dotnow.AppDomain domain = null;
 
     private IEnumerable<Type> types = null;
@@ -29,19 +28,12 @@ public class SceneLoader : MonoBehaviour
 
     private void Start()
     {
-        DontDestroyOnLoad(this);
-
         domain = new dotnow.AppDomain();
     }
 
     public void LoadSceneAndCompileScripts()
     {
         StartCoroutine(DownloadScene());
-    }
-
-    public void LoadAssemblies()
-    {
-        
     }
 
     IEnumerator DownloadScene()
@@ -127,8 +119,29 @@ public class SceneLoader : MonoBehaviour
             Debug.LogError("No Assembly found!");
         }
 
-        CLRModule module = domain.LoadModuleStream(new MemoryStream(playerAssembly.bytes), false);
+        AssemblyDefinition assembly = AssemblyDefinition.ReadAssembly(new MemoryStream(playerAssembly.bytes));
+        var referencedNamespaces = assembly.MainModule.GetTypeReferences()
+                                             .Select(typeRef => typeRef.Namespace)
+                                             .Where(ns => !string.IsNullOrEmpty(ns))
+                                             .Distinct()
+                                             .OrderBy(ns => ns);
 
+        foreach (var ns in referencedNamespaces)
+        {
+            Debug.Log(ns);
+        }
+
+        foreach (var reference in assembly.MainModule.AssemblyReferences)
+        {
+            Debug.Log(reference.FullName);
+        }
+
+        foreach (var attribute in assembly.CustomAttributes)
+        {
+            Debug.Log($"Attribute: {attribute.AttributeType.FullName}");
+        }
+
+        CLRModule module = domain.LoadModuleStream(new MemoryStream(playerAssembly.bytes), false);
         
         Dictionary<string, ComponentData> componentData = sceneData.assetMetaData.componentTable;
 
