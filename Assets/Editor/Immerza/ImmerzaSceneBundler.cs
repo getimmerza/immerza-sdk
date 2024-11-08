@@ -13,6 +13,7 @@ using System.Reflection;
 using Newtonsoft.Json;
 using ImmerzaSDK.Types;
 using ImmerzaSDK.Util;
+using System.Diagnostics;
 
 public class ImmerzaSceneBundler : EditorWindow
 {
@@ -26,7 +27,13 @@ public class ImmerzaSceneBundler : EditorWindow
     private Button exportBtn = null;
     private Label successLabel = null;
 
+#if UNITY_EDITOR_OSX
+    private string dotnetPath = Path.Combine(EditorApplication.applicationContentsPath, "NetCoreRuntime/dotnet");
+#endif
+#if UNITY_EDITOR_WIN
     private string dotnetPath = Path.Combine(EditorApplication.applicationContentsPath, "NetCoreRuntime/dotnet.exe");
+#endif
+
     private string sceneCachePath = Path.Combine(Path.GetDirectoryName(Application.dataPath), "ImmerzaSceneCache");
 
     [MenuItem("Immerza/Scene Bundler")]
@@ -95,7 +102,10 @@ public class ImmerzaSceneBundler : EditorWindow
 
     private void ExportScene()
     {
-        CompileAssembly();
+        if (!CompileAssembly())
+        {
+            return;
+        }
 
         ImmerzaUtil.InitCrcTable();
 
@@ -219,7 +229,7 @@ public class ImmerzaSceneBundler : EditorWindow
 
         EditorSceneManager.SaveScene(activeScene);
 
-        List<string> assetPaths = new List<string>();
+        List<string> assetPaths = new();
 
         string scenePath = activeScene.path;
         assetMetadata.AddAsset("ImmerzaScene", scenePath);
@@ -299,7 +309,7 @@ public class ImmerzaSceneBundler : EditorWindow
         SetSuccessMsg(true);
     }
 
-    private void CompileAssembly()
+    private bool CompileAssembly()
     {
         if (!Directory.Exists(Path.Combine(sceneCachePath, sceneToExport.name)))
         {
@@ -323,8 +333,16 @@ public class ImmerzaSceneBundler : EditorWindow
             Arguments = $"build {Path.Combine(sceneCachePath, sceneToExport.name, sceneToExport.name + ".csproj")}"
         };
 
-
-        System.Diagnostics.Process.Start(processInfo);
+        Process compilerProcess = new();
+        compilerProcess.StartInfo = processInfo;
+        if (!compilerProcess.Start())
+        {
+            SetSuccessMsg(false, "Compiler has not been found!");
+            UnityEngine.Debug.LogError("Check if the path is correct: " + dotnetPath);
+            return false;
+        }
+        compilerProcess.WaitForExit();
+        return true;
     }
 
     private static void CreateProjectFile(string path)
@@ -354,7 +372,7 @@ $@"<Project Sdk='Microsoft.NET.Sdk'>
         File.WriteAllText(path, msbuildProj);
     }
 
-    private void SetSuccessMsg(bool success)
+    private void SetSuccessMsg(bool success, string message)
     {
         successLabel.visible = true;
         if (success)
@@ -365,7 +383,12 @@ $@"<Project Sdk='Microsoft.NET.Sdk'>
         else
         {
             successLabel.style.color = new Color(1.0f, 0.36f, 0.36f);
-            successLabel.text = "Scene export failed.";
+            successLabel.text = message == null ? message : "Scene export failed.";
         }
+    }
+
+    private void SetSuccessMsg(bool success)
+    {
+        SetSuccessMsg(success, null);
     }
 }
