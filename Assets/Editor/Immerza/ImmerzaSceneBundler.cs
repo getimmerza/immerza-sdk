@@ -103,12 +103,11 @@ public class ImmerzaSceneBundler : EditorWindow
     {
         if (!CompileAssembly())
         {
-            SetSuccessMsg(false);
             return;
         }
         SetSuccessMsg(true);
 
-        /*ImmerzaUtil.InitCrcTable();
+        ImmerzaUtil.InitCrcTable();
 
         EditorSceneManager.OpenScene(AssetDatabase.GetAssetPath(sceneToExport));
 
@@ -308,7 +307,6 @@ public class ImmerzaSceneBundler : EditorWindow
         AssetDatabase.DeleteAsset(newScenePath);
         AssetDatabase.DeleteAsset(assemblyAssetPath);
         SetSuccessMsg(true);
-        */
     }
 
     private bool CompileAssembly()
@@ -350,7 +348,6 @@ public class ImmerzaSceneBundler : EditorWindow
             UseShellExecute = false,
             FileName = dotnetPath,
             WindowStyle = System.Diagnostics.ProcessWindowStyle.Normal,
-            RedirectStandardOutput = true,
             RedirectStandardError = true,
             WorkingDirectory = dotnetPath.Split("dotnet")[0],
 
@@ -359,15 +356,14 @@ public class ImmerzaSceneBundler : EditorWindow
 
         Process compilerProcess = new();
         compilerProcess.StartInfo = processInfo;
-        compilerProcess.OutputDataReceived += (sender, args) => Debug.Log($"received output: {args.Data}");
-        compilerProcess.ErrorDataReceived += (sender, args) => Debug.Log($"received output: {args.Data}");
+        compilerProcess.ErrorDataReceived += (sender, args) => Debug.Log($"Error: {args.Data}");
         if (!compilerProcess.Start())
         {
             SetSuccessMsg(false, "Compiler has not been found!");
             UnityEngine.Debug.LogError("Check if the path is correct: " + dotnetPath);
             return false;
         }
-        compilerProcess.BeginOutputReadLine();
+
         compilerProcess.BeginErrorReadLine();
         compilerProcess.WaitForExit();
         return true;
