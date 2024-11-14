@@ -1,0 +1,12 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
+    <ui:VisualElement name="VisualElement" style="flex-grow: 1;">
+        <ui:Label tabindex="-1" text="Export SDK" parse-escape-sequences="true" display-tooltip-when-elided="true" enable-rich-text="true" focusable="false" style="margin-left: 10px; padding-left: 0; padding-right: 0; padding-top: 0; padding-bottom: 0; margin-bottom: 0; margin-right: 0; margin-top: 4px; -unity-font-style: bold; height: 42px; -unity-text-align: middle-center; font-size: 28px;" />
+        <ui:GroupBox style="margin-left: 8px;">
+            <ui:Label tabindex="-1" text="Export Settings:" parse-escape-sequences="true" display-tooltip-when-elided="true" name="ExportLabel" view-data-key="ExportLabel" style="-unity-font-style: bold;" />
+            <ui:TextField picking-mode="Ignore" label="Export path:" value="ImmerzaPackages" password="false" readonly="false" is-delayed="false" hide-mobile-input="false" auto-correction="false" multiline="false" name="ExportPath" view-data-key="ExportPath" tooltip="Path to where the bundle will be exported" />
+            <ui:TextField picking-mode="Ignore" label="Version:" value="v1.0.0" password="false" readonly="false" is-delayed="false" hide-mobile-input="false" auto-correction="false" multiline="false" name="Version" view-data-key="Version" tooltip="Version" />
+            <ui:Button text="Export SDK" parse-escape-sequences="true" display-tooltip-when-elided="true" view-data-key="ExportButton" name="ExportButton" style="margin-top: 16px; rotate: 0; display: flex; visibility: visible; opacity: 1;" />
+        </ui:GroupBox>
+        <ui:Label tabindex="-1" text="*" parse-escape-sequences="true" display-tooltip-when-elided="true" view-data-key="SuccessLabel" name="SuccessLabel" enable-rich-text="true" style="white-space: nowrap; -unity-text-align: middle-left; text-overflow: clip; justify-content: center; align-items: auto; align-self: center; border-left-color: rgba(0, 0, 0, 0); border-right-color: rgba(0, 0, 0, 0); border-top-color: rgba(0, 0, 0, 0); border-bottom-color: rgba(0, 0, 0, 0); background-color: rgba(0, 0, 0, 0);" />
+    </ui:VisualElement>
+</ui:UXML>

@@ -14,6 +14,8 @@ using Newtonsoft.Json;
 using ImmerzaSDK.Types;
 using ImmerzaSDK.Util;
 using System.Diagnostics;
+using static UnityEngine.GraphicsBuffer;
+using Debug = UnityEngine.Debug;
 
 public class ImmerzaSceneBundler : EditorWindow
 {
@@ -27,12 +29,9 @@ public class ImmerzaSceneBundler : EditorWindow
     private Button exportBtn = null;
     private Label successLabel = null;
 
-#if UNITY_EDITOR_OSX
-    private string dotnetPath = Path.Combine(EditorApplication.applicationContentsPath, "NetCoreRuntime/dotnet");
-#endif
-#if UNITY_EDITOR_WIN
-    private string dotnetPath = Path.Combine(EditorApplication.applicationContentsPath, "NetCoreRuntime/dotnet.exe");
-#endif
+    string unityAssembliesPath = Path.Combine(EditorApplication.applicationContentsPath, "Managed");
+    string generalAssembliesPath = Path.Combine(EditorApplication.applicationContentsPath, "UnityReferenceAssemblies", "unity-4.8-api");
+    //string packageAssembliesPath = Path.Combine(Path.GetDirectoryName(Application.dataPath), "Library", "ScriptAssemblies");
 
     private string sceneCachePath = Path.Combine(Path.GetDirectoryName(Application.dataPath), "ImmerzaSceneCache");
 
@@ -106,6 +105,7 @@ public class ImmerzaSceneBundler : EditorWindow
         {
             return;
         }
+        SetSuccessMsg(true);
 
         ImmerzaUtil.InitCrcTable();
 
@@ -316,12 +316,31 @@ public class ImmerzaSceneBundler : EditorWindow
             Directory.CreateDirectory(Path.Combine(sceneCachePath, sceneToExport.name));
         }
 
-        CreateProjectFile(Path.Combine(sceneCachePath, sceneToExport.name, sceneToExport.name + ".csproj"));
-
         ImmerzaUtil.CopyDirectory(
             Path.Combine(Path.GetDirectoryName(Application.dataPath), scriptsPath.text), 
             Path.Combine(sceneCachePath, sceneToExport.name)
         );
+
+#if UNITY_EDITOR_OSX
+        string dotnetPath = Path.Combine(EditorApplication.applicationContentsPath, "NetCoreRuntime", "dotnet");
+        string cscPath = Path.Combine("..", "DotNetSdkRoslyn", "csc ");
+#endif
+#if UNITY_EDITOR_WIN
+        string dotnetPath = Path.Combine(EditorApplication.applicationContentsPath, "NetCoreRuntime", "dotnet.exe");
+        string cscPath = Path.Combine("..", "DotNetSdkRoslyn", "csc.dll ");
+#endif
+
+        string args = cscPath;
+
+        args += "/target:library ";
+
+        args += $"/reference:{Path.Combine(new string[] { "..", "NetStandard", "ref", "2.1.0", "netstandard.dll" })} ";
+        args += $"/reference:{Path.Combine(new string[] { "..", "Managed", "UnityEngine.dll" })} ";
+
+        args += @$"/out:""{Path.Combine(sceneCachePath, sceneToExport.name, sceneToExport.name + ".dll")}"" ";
+        args += @$"""{Path.Combine(sceneCachePath, sceneToExport.name, "*.cs")}"" ";
+
+        UnityEngine.Debug.Log(args);
 
         System.Diagnostics.ProcessStartInfo processInfo = new()
         {
@@ -329,47 +348,25 @@ public class ImmerzaSceneBundler : EditorWindow
             UseShellExecute = false,
             FileName = dotnetPath,
             WindowStyle = System.Diagnostics.ProcessWindowStyle.Normal,
+            RedirectStandardError = true,
+            WorkingDirectory = dotnetPath.Split("dotnet")[0],
 
-            Arguments = $"build {Path.Combine(sceneCachePath, sceneToExport.name, sceneToExport.name + ".csproj")}"
+            Arguments = args
         };
 
         Process compilerProcess = new();
         compilerProcess.StartInfo = processInfo;
+        compilerProcess.ErrorDataReceived += (sender, args) => Debug.Log($"Error: {args.Data}");
         if (!compilerProcess.Start())
         {
             SetSuccessMsg(false, "Compiler has not been found!");
             UnityEngine.Debug.LogError("Check if the path is correct: " + dotnetPath);
             return false;
         }
+
+        compilerProcess.BeginErrorReadLine();
         compilerProcess.WaitForExit();
         return true;
-    }
-
-    private static void CreateProjectFile(string path)
-    {
-        string unityAssembliesPath = Path.Combine(EditorApplication.applicationContentsPath, "Managed", "*.dll");
-        string generalAssembliesPath = Path.Combine(EditorApplication.applicationContentsPath, "UnityReferenceAssemblies", "unity-4.8-api", "*.dll");
-        string packageAssembliesPath = Path.Combine(Path.GetDirectoryName(Application.dataPath), "Library", "ScriptAssemblies", "*.dll");
-
-        string msbuildProj = // Unity uses C# 9, so there is no raw string interpolation (C# 11). That makes is very unpleasing to retain string structure.
-$@"<Project Sdk='Microsoft.NET.Sdk'>
-    <PropertyGroup>
-        <OutputType>Library</OutputType>
-        <TargetFramework>netstandard2.1</TargetFramework>
-        <Configuration>Release</Configuration>
-        <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
-        <AppendRuntimeIdentifierToOutputPath>false</AppendRuntimeIdentifierToOutputPath>
-        <OutputPath>./</OutputPath>
-    </PropertyGroup>
-    <ItemGroup>
-        <Reference Include=""{unityAssembliesPath}""><Private>false</Private></Reference>
-        <Reference Include=""{generalAssembliesPath}""><Private>false</Private></Reference>
-        <Reference Include=""{packageAssembliesPath}""><Private>false</Private></Reference>
-    </ItemGroup>
-</Project>
-        ";
-
-        File.WriteAllText(path, msbuildProj);
     }
 
     private void SetSuccessMsg(bool success, string message)
