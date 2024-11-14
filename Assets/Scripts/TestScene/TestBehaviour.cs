@@ -1,5 +1,3 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Networking;
 
@@ -14,12 +12,6 @@ public class TestBehaviour : MonoBehaviour
 
     [SerializeField]
     private float baseIntensity;
-
-    private async void Start()
-    {
-        using UnityWebRequest req = new UnityWebRequest("https://google.com", "GET");
-        await req.SendWebRequest();
-    }
 
     // Update is called once per frame
     void Update()

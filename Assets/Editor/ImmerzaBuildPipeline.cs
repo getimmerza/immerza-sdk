@@ -17,24 +17,23 @@ using System.Diagnostics;
 
 public class ImmerzaBuildPipeline : EditorWindow
 {
-    private VisualTreeAsset treeAsset = null;
-    [SerializeField] private SceneAsset sceneToExport = null;
+    [SerializeField] private VisualTreeAsset treeAsset = null;
 
-    private ListView scenesView = null;
     private TextField path = null;
-    private TextField scriptsPath = null;
-    private EnumField buildTarget = null;
+    private TextField versionField = null;
     private Button exportBtn = null;
     private Label successLabel = null;
 
 #if UNITY_EDITOR_OSX
-    private string dotnetPath = Path.Combine(EditorApplication.applicationContentsPath, "NetCoreRuntime/dotnet");
+    private string dotnetPath = Path.Combine(EditorApplication.applicationContentsPath, "NetCoreRuntime", "dotnet");
+    private string cscPath = Path.Combine("..", "DotNetSdkRoslyn", "csc");
 #endif
 #if UNITY_EDITOR_WIN
-    private string dotnetPath = Path.Combine(EditorApplication.applicationContentsPath, "NetCoreRuntime/dotnet.exe");
+    private string dotnetPath = Path.Combine(EditorApplication.applicationContentsPath, "NetCoreRuntime", "dotnet.exe");
+    private string cscPath = Path.Combine("..", "DotNetSdkRoslyn", "csc.exe");
 #endif
 
-    [MenuItem("Immerza/Build SDK Package")]
+    [MenuItem("Immerza/Immerza SDK Builder")]
     public static void ShowSceneBundler()
     {
         ImmerzaBuildPipeline window = GetWindow<ImmerzaBuildPipeline>();
@@ -49,71 +48,34 @@ public class ImmerzaBuildPipeline : EditorWindow
 
         treeAsset.CloneTree(root);
 
-        scenesView = root.Q<ListView>("SceneList");
         path = root.Q<TextField>("ExportPath");
-        scriptsPath = root.Q<TextField>("ScriptsPath");
-        buildTarget = root.Q<EnumField>("PlatformEnum");
-        buildTarget.Init(BuildTarget.Android);
+        versionField = root.Q<TextField>("Version");
         exportBtn = root.Q<Button>("ExportButton");
-        exportBtn.SetEnabled(false);
-        exportBtn.style.backgroundColor = new UnityEngine.Color(0.2f, 0.2f, 0.2f);
-        exportBtn.style.color = new UnityEngine.Color(0.3f, 0.3f, 0.3f);
         successLabel = root.Q<Label>("SuccessLabel");
         successLabel.visible = false;
 
-        string[] allSceneGuids = AssetDatabase.FindAssets("t:SceneAsset", new[] { "Assets" });
-        List<SceneAsset> allScenes = new List<SceneAsset>();
-
-        foreach (string guid in allSceneGuids)
-        {
-            allScenes.Add(AssetDatabase.LoadAssetAtPath<SceneAsset>(AssetDatabase.GUIDToAssetPath(guid)));
-        }
-
-        scenesView.makeItem = () => new Label();
-        scenesView.bindItem = (item, index) => { (item as Label).text = allScenes[index].name; };
-        scenesView.itemsSource = allScenes;
-
-        scenesView.selectionChanged += SceneSelected;
-        exportBtn.clicked += ExportScene;
+        exportBtn.clicked += ExportSDK;
     }
 
-    private void SceneSelected(IEnumerable<object> scenes)
+    private void ExportSDK()
     {
-        SceneAsset scene = scenes.First() as SceneAsset;
-        if (scene == null)
-        {
-            return;
-        }
-
-        sceneToExport = scene;
-
-        exportBtn.SetEnabled(true);
-        exportBtn.style.backgroundColor = new UnityEngine.Color(0.4f, 0.4f, 0.4f);
-        exportBtn.style.color = new UnityEngine.Color(1.0f, 1.0f, 1.0f);
+        string assemblyPath = Path.Combine();
+        UnityEngine.Debug.Log(CompileAssembly());
     }
 
     private bool CompileAssembly()
     {
-        if (!Directory.Exists(Path.Combine(sceneCachePath, sceneToExport.name)))
-        {
-            Directory.CreateDirectory(Path.Combine(sceneCachePath, sceneToExport.name));
-        }
+        string args = cscPath;
 
-        CreateProjectFile(Path.Combine(sceneCachePath, sceneToExport.name, sceneToExport.name + ".csproj"));
-
-        ImmerzaUtil.CopyDirectory(
-            Path.Combine(Path.GetDirectoryName(Application.dataPath), scriptsPath.text), 
-            Path.Combine(sceneCachePath, sceneToExport.name)
-        );
 
         System.Diagnostics.ProcessStartInfo processInfo = new()
         {
             CreateNoWindow = false,
-            UseShellExecute = false,
+            UseShellExecute = true,
             FileName = dotnetPath,
             WindowStyle = System.Diagnostics.ProcessWindowStyle.Normal,
 
-            Arguments = $"build {Path.Combine(sceneCachePath, sceneToExport.name, sceneToExport.name + ".csproj")}"
+            Arguments = args
         };
 
         Process compilerProcess = new();
@@ -128,6 +90,7 @@ public class ImmerzaBuildPipeline : EditorWindow
         return true;
     }
 
+    /*
     private static void CreateProjectFile(string path)
     {
         string unityAssembliesPath = Path.Combine(EditorApplication.applicationContentsPath, "Managed", "*.dll");
@@ -153,7 +116,7 @@ $@"<Project Sdk='Microsoft.NET.Sdk'>
         ";
 
         File.WriteAllText(path, msbuildProj);
-    }
+    }*/
 
     private void SetSuccessMsg(bool success, string message)
     {
