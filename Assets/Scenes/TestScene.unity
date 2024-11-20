@@ -439,6 +439,23 @@ MonoBehaviour:
   movingCube: {fileID: 2074937359}
   movingLight: {fileID: 345128253}
   baseIntensity: 10
+  stringTest: immerza
+  testListInt: 0b0000007b000000ae0800008c860000
+  testListString:
+  - awdadwadawdawda
+  - 34tg
+  - grg34r
+  - 3t44g33g
+  testArrayString:
+  - 123dff2f24f
+  - sdffdsfd
+  testArrayPrimitive:
+  - 123
+  - 123.35453
+  testListReferences:
+  - {fileID: 59109391}
+  testArrayReferences:
+  - {fileID: 1533765418}
 --- !u!4 &474714845
 Transform:
   m_ObjectHideFlags: 0

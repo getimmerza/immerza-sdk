@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Buffers.Binary;
+using System.Collections;
+using System.Collections.Generic;
 using System.IO;
 using UnityEngine;
 
@@ -66,6 +68,47 @@ namespace ImmerzaSDK.Util
             {
                 File.Copy(newPath, newPath.Replace(sourcePath, targetPath), true);
             }
+        }
+
+        public static bool IsFieldAPrimitiveList(Type type)
+        {
+            if (!typeof(IList).IsAssignableFrom(type))
+            {
+                return false;
+            }
+
+            if (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(List<>))
+            {
+                return type.GetGenericArguments()[0].IsPrimitive || type.GetGenericArguments()[0].IsAssignableFrom(typeof(string));
+            }
+
+            return false;
+        }
+
+        public static bool IsFieldAPrimitiveArray(Type type)
+        {
+            return type.IsArray && (type.GetElementType().IsPrimitive || type.GetElementType().IsAssignableFrom(typeof(string)));
+        }
+
+        public static bool IsFieldAReferenceList(Type type)
+        {
+            if (!typeof(IList).IsAssignableFrom(type))
+            {
+                return false;
+            }
+
+            if (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(List<>))
+            {
+                Type argType =  type.GetGenericArguments()[0];
+                return argType.IsClass && argType != typeof(string) && argType.IsSubclassOf(typeof(UnityEngine.Object));
+            }
+
+            return false;
+        }
+
+        public static bool IsFieldAReferenceArray(Type type)
+        {
+            return type.IsArray && type.GetElementType().IsClass && type.GetElementType() != typeof(string) && type.GetElementType().IsSubclassOf(typeof(UnityEngine.Object));
         }
     }
 }

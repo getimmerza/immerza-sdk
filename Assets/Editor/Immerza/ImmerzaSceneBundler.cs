@@ -173,7 +173,26 @@ public class ImmerzaSceneBundler : EditorWindow
 
                             if (isPublic || isSerializedPrivate)
                             {
-                                if (field.FieldType.IsClass && field.FieldType != typeof(string))
+                                if (ImmerzaUtil.IsFieldAPrimitiveList(field.FieldType) || ImmerzaUtil.IsFieldAPrimitiveArray(field.FieldType))
+                                {
+                                    ValueField fieldValue = new ValueField()
+                                    {
+                                        value = JsonConvert.SerializeObject(field.GetValue(script), Formatting.Indented, new JsonSerializerSettings { ReferenceLoopHandling = ReferenceLoopHandling.Error }),
+                                        type = field.FieldType,
+                                        serializationType = ImmerzaSDK.Types.ValueType.ArrayValue
+                                    };
+
+                                    values.Add(field.Name, fieldValue);
+                                }
+                                else if (ImmerzaUtil.IsFieldAReferenceList(field.FieldType))
+                                {
+                                    Debug.Log("List: " + field.FieldType.Name);
+                                }
+                                else if (ImmerzaUtil.IsFieldAReferenceArray(field.FieldType))
+                                {
+                                    Debug.Log("Array: " + field.FieldType.Name);
+                                }
+                                else if (field.FieldType.IsClass && field.FieldType != typeof(string) && field.FieldType.IsSubclassOf(typeof(UnityEngine.Object)))
                                 {
                                     UnityEngine.Object fieldData = (UnityEngine.Object)field.GetValue(script);
 
@@ -197,7 +216,7 @@ public class ImmerzaSceneBundler : EditorWindow
 
                                     values.Add(field.Name, fieldValue);
                                 }
-                                else if (field.FieldType.IsPrimitive)
+                                else if (field.FieldType.IsPrimitive || field.FieldType == typeof(string))
                                 {
                                     ValueField fieldValue = new ValueField()
                                     {
