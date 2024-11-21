@@ -14,8 +14,9 @@ using Newtonsoft.Json;
 using ImmerzaSDK.Types;
 using ImmerzaSDK.Util;
 using System.Diagnostics;
-using static UnityEngine.GraphicsBuffer;
 using Debug = UnityEngine.Debug;
+using System.Collections;
+using SharpCompress;
 
 public class ImmerzaSceneBundler : EditorWindow
 {
@@ -105,7 +106,6 @@ public class ImmerzaSceneBundler : EditorWindow
         {
             return;
         }
-        SetSuccessMsg(true);
 
         ImmerzaUtil.InitCrcTable();
 
@@ -114,8 +114,9 @@ public class ImmerzaSceneBundler : EditorWindow
         string bundleDir = Path.Combine(Path.GetDirectoryName(Application.dataPath), path.text);
 
         SceneMetadata sceneMetadata = new SceneMetadata();
-
         AssetMetadata assetMetadata = new AssetMetadata();
+
+        List<string> assetPaths = new();
 
         if (!Directory.Exists(bundleDir))
         {
@@ -173,7 +174,70 @@ public class ImmerzaSceneBundler : EditorWindow
 
                             if (isPublic || isSerializedPrivate)
                             {
-                                if (field.FieldType.IsClass && field.FieldType != typeof(string))
+                                if (ImmerzaUtil.IsFieldAPrimitiveList(field.FieldType) || ImmerzaUtil.IsFieldAPrimitiveArray(field.FieldType))
+                                {
+                                    ValueField fieldValue = new ValueField()
+                                    {
+                                        value = JsonConvert.SerializeObject(field.GetValue(script), Formatting.Indented, new JsonSerializerSettings { ReferenceLoopHandling = ReferenceLoopHandling.Error }),
+                                        type = field.FieldType,
+                                        serializationType = ImmerzaSDK.Types.ValueType.ArrayValue
+                                    };
+
+                                    values.Add(field.Name, fieldValue);
+                                }
+                                else if (ImmerzaUtil.IsFieldAReferenceList(field.FieldType) || ImmerzaUtil.IsFieldAReferenceArray(field.FieldType))
+                                {
+                                    List<string> storedReferences = new();
+                                    IEnumerable crtReferences = (IEnumerable)field.GetValue(script);
+
+                                    ValueField fieldValue = new();
+
+                                    if (!crtReferences.GetEnumerator().MoveNext())
+                                    {
+                                        continue;
+                                    }
+
+                                    foreach (object reference in crtReferences)
+                                    {
+                                        UnityEngine.Object fieldData = (UnityEngine.Object)reference;
+
+                                        GameObject fieldGameObject = null;
+
+                                        if (fieldData is GameObject @object)
+                                        {
+                                            if (@object.scene.name == null)
+                                            {
+                                                // Prefab implementation
+                                            }
+                                            else
+                                            {
+                                                fieldGameObject = @object;
+                                                storedReferences.Add(ImmerzaUtil.GetHierarchyPath(fieldGameObject));
+                                                fieldValue.serializationType = ImmerzaSDK.Types.ValueType.ArrayReference;
+                                            }
+                                        }
+                                        else if (fieldData is UnityEngine.Component component)
+                                        {
+                                            fieldGameObject = component.gameObject;
+                                            storedReferences.Add(ImmerzaUtil.GetHierarchyPath(fieldGameObject));
+                                            fieldValue.serializationType = ImmerzaSDK.Types.ValueType.ArrayReference;
+
+                                        }
+                                        else
+                                        {
+                                            string assetPath = AssetDatabase.GetAssetPath(fieldData);
+                                            assetPaths.Add(assetPath);
+                                            storedReferences.Add(assetPath);
+                                            fieldValue.serializationType = ImmerzaSDK.Types.ValueType.ArrayAssetReference;
+                                        }
+                                    }
+
+                                    fieldValue.value = JsonConvert.SerializeObject(storedReferences, Formatting.Indented, new JsonSerializerSettings { ReferenceLoopHandling = ReferenceLoopHandling.Error });
+                                    fieldValue.type = typeof(List<string>);
+
+                                    values.Add(field.Name, fieldValue);
+                                }
+                                else if (field.FieldType.IsClass && field.FieldType != typeof(string) && field.FieldType.IsSubclassOf(typeof(UnityEngine.Object)))
                                 {
                                     UnityEngine.Object fieldData = (UnityEngine.Object)field.GetValue(script);
 
@@ -197,7 +261,7 @@ public class ImmerzaSceneBundler : EditorWindow
 
                                     values.Add(field.Name, fieldValue);
                                 }
-                                else if (field.FieldType.IsPrimitive)
+                                else if (field.FieldType.IsPrimitive || field.FieldType == typeof(string))
                                 {
                                     ValueField fieldValue = new ValueField()
                                     {
@@ -205,6 +269,8 @@ public class ImmerzaSceneBundler : EditorWindow
                                         type = field.FieldType,
                                         serializationType = ImmerzaSDK.Types.ValueType.SingleValue
                                     };
+
+                                    Debug.Log(field.FieldType.Name);
 
                                     values.Add(field.Name, fieldValue);
                                 }
@@ -228,8 +294,6 @@ public class ImmerzaSceneBundler : EditorWindow
         }
 
         EditorSceneManager.SaveScene(activeScene);
-
-        List<string> assetPaths = new();
 
         string scenePath = activeScene.path;
         assetMetadata.AddAsset("ImmerzaScene", scenePath);

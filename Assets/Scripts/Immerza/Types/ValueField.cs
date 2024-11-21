@@ -5,11 +5,14 @@ namespace ImmerzaSDK.Types
 {
     public enum ValueType
     {
+        None,
         SingleValue,
         SingleReference,
         ArrayValue,
         ArrayReference,
-        AssetReference
+        SingleAssetReference,
+        ArrayAssetReference,
+        UnityEvent
     }
 
     public class ValueField

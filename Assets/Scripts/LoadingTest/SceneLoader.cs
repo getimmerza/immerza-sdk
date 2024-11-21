@@ -33,33 +33,19 @@ public class SceneLoader : MonoBehaviour
 
     public void LoadSceneAndCompileScripts()
     {
-        StartCoroutine(DownloadScene());
+        DownloadScene();
     }
 
-    IEnumerator DownloadScene()
+    void DownloadScene()
     {
-        UnityWebRequest metadataReq = UnityWebRequest.Get("https://trauty.net/immerza/immerza_metadata.json");
-        yield return metadataReq.SendWebRequest();
+        byte[] bundle = File.ReadAllBytes("C:\\Users\\traut\\Desktop\\immerza-sdk\\ImmerzaBundles\\immerza_data.bundle");
+        string metadata = File.ReadAllText("C:\\Users\\traut\\Desktop\\immerza-sdk\\ImmerzaBundles\\immerza_metadata.json");
 
-        if (metadataReq.result != UnityWebRequest.Result.Success)
-        {
-            Debug.LogError("Scene file not found!");
-            yield break;
-        }
+        ProcessBundleInMemory(bundle);
 
-        UnityWebRequest bundleReq = UnityWebRequest.Get("https://trauty.net/immerza/immerza_data.bundle");
-        yield return bundleReq.SendWebRequest();
-
-        if (bundleReq.result != UnityWebRequest.Result.Success)
-        {
-            Debug.LogError("Scene file not found!");
-            yield break;
-        }
-
-        ProcessBundleInMemory(bundleReq.downloadHandler.data);
-
-        OnBundleLoaded(metadataReq.downloadHandler.text);
+        OnBundleLoaded(metadata);
     }
+
 
     private void ProcessBundleInMemory(byte[] bundleData)
     {
@@ -142,7 +128,13 @@ public class SceneLoader : MonoBehaviour
         }
 
         CLRModule module = domain.LoadModuleStream(new MemoryStream(playerAssembly.bytes), false);
-        
+
+        foreach (var attribute in module.GetTypes())
+        {
+            Debug.LogWarning(attribute.Name);
+        }
+
+
         Dictionary<string, ComponentData> componentData = sceneData.assetMetaData.componentTable;
 
         List<CLRInstance> proxyList = new();
@@ -164,7 +156,7 @@ public class SceneLoader : MonoBehaviour
             Type type = module.GetTypes()
                 .Where(t => t.Name == compData.className)
                 .FirstOrDefault();
-
+            
             CLRInstance instance = (CLRInstance)OverrideBindings.AddComponentOverride(domain, null, curGameObject, new object[] { type });
             proxyList.Add(instance);
             proxyGoList.Add(curGameObject);
@@ -188,19 +180,26 @@ public class SceneLoader : MonoBehaviour
                     if (field.Value.type == typeof(GameObject))
                     {
                         prox.SetFieldValue(clrFieldList[clrFieldIndex], GameObject.Find(field.Value.value));
-                        //prox.Fields[field.Key] = GameObject.Find(field.Value.value);
                     }
                     else
                     {
                         prox.SetFieldValue(clrFieldList[clrFieldIndex], GameObject.Find(field.Value.value).GetComponent(field.Value.type));
-                        //prox.Fields[field.Key] = GameObject.Find(field.Value.value).GetComponent(field.Value.type);
                     }
                 }
                 else if (field.Value.serializationType == ImmerzaSDK.Types.ValueType.SingleValue)
                 {
                     prox.SetFieldValue(clrFieldList[clrFieldIndex], Convert.ChangeType(field.Value.value, field.Value.type));
 
-                    //prox.Fields[field.Key] = Convert.ChangeType(field.Value.value, field.Value.type);
+                }
+                else if (field.Value.serializationType == ImmerzaSDK.Types.ValueType.ArrayValue)
+                {
+                    Debug.Log("MULTIPLE VALUES");
+                }
+                else if (field.Value.serializationType == ImmerzaSDK.Types.ValueType.ArrayReference)
+                {
+
+                    Debug.Log(dataBundle.LoadAsset("Assets/Materials/ControllerGrey_Mat.mat", typeof(Material)));
+                    //prox.SetFieldValue(clrFieldList[clrFieldIndex], );
                 }
 
                 clrFieldIndex++;
