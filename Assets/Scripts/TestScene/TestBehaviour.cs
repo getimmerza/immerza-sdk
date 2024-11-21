@@ -1,7 +1,5 @@
-using NUnit.Framework;
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.Networking;
 
 
 public class TestBehaviour : MonoBehaviour
@@ -18,19 +16,22 @@ public class TestBehaviour : MonoBehaviour
     [SerializeField]
     private string stringTest = "Hello";
 
-    [SerializeField] private List<int> testListInt = new();
+    /*[SerializeField] private List<int> testListInt = new();
 
     [SerializeField] private List<string> testListString = new();
     [SerializeField] private string[] testArrayString;
     [SerializeField] private float[] testArrayPrimitive;
     [SerializeField] private List<Light> testListReferences = new();
-    [SerializeField] private MeshRenderer[] testArrayReferences;
+    [SerializeField] private MeshRenderer[] testArrayReferences;*/
+
+    [SerializeField] private List<Material> testAssetReferences = new();
+    [SerializeField] private List<GameObject> testGOReferences = new();
 
     private void Start()
     {
         Debug.Log(stringTest);
 
-        testListInt.Add(1);
+        //testListInt.Add(1);
     }
 
     // Update is called once per frame

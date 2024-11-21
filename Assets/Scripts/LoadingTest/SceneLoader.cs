@@ -180,19 +180,26 @@ public class SceneLoader : MonoBehaviour
                     if (field.Value.type == typeof(GameObject))
                     {
                         prox.SetFieldValue(clrFieldList[clrFieldIndex], GameObject.Find(field.Value.value));
-                        //prox.Fields[field.Key] = GameObject.Find(field.Value.value);
                     }
                     else
                     {
                         prox.SetFieldValue(clrFieldList[clrFieldIndex], GameObject.Find(field.Value.value).GetComponent(field.Value.type));
-                        //prox.Fields[field.Key] = GameObject.Find(field.Value.value).GetComponent(field.Value.type);
                     }
                 }
                 else if (field.Value.serializationType == ImmerzaSDK.Types.ValueType.SingleValue)
                 {
                     prox.SetFieldValue(clrFieldList[clrFieldIndex], Convert.ChangeType(field.Value.value, field.Value.type));
 
-                    //prox.Fields[field.Key] = Convert.ChangeType(field.Value.value, field.Value.type);
+                }
+                else if (field.Value.serializationType == ImmerzaSDK.Types.ValueType.ArrayValue)
+                {
+                    Debug.Log("MULTIPLE VALUES");
+                }
+                else if (field.Value.serializationType == ImmerzaSDK.Types.ValueType.ArrayReference)
+                {
+
+                    Debug.Log(dataBundle.LoadAsset("Assets/Materials/ControllerGrey_Mat.mat", typeof(Material)));
+                    //prox.SetFieldValue(clrFieldList[clrFieldIndex], );
                 }
 
                 clrFieldIndex++;
