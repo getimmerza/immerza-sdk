@@ -1,0 +1,48 @@
+[gd_scene load_steps=2 format=3 uid="uid://cv6g6s43pnbyr"]
+
+[ext_resource type="Texture2D" uid="uid://be5os6trfqsn1" path="res://addons/immerza_editor/logo.svg" id="1_ct1ak"]
+
+[node name="ImmerzaMainScreen" type="CenterContainer"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="MarginContainer" type="MarginContainer" parent="."]
+layout_mode = 2
+theme_override_constants/margin_left = 16
+theme_override_constants/margin_top = 16
+theme_override_constants/margin_right = 16
+theme_override_constants/margin_bottom = 16
+
+[node name="VBoxContainer" type="VBoxContainer" parent="MarginContainer"]
+layout_mode = 2
+theme_override_constants/separation = 48
+
+[node name="Logo" type="TextureRect" parent="MarginContainer/VBoxContainer"]
+layout_mode = 2
+texture = ExtResource("1_ct1ak")
+
+[node name="ExportFolder" type="LineEdit" parent="MarginContainer/VBoxContainer"]
+layout_mode = 2
+placeholder_text = "Path to export to..."
+
+[node name="PathToScene" type="LineEdit" parent="MarginContainer/VBoxContainer"]
+layout_mode = 2
+placeholder_text = "Path to scene relative to project (\"res://\")"
+
+[node name="ExportButton" type="Button" parent="MarginContainer/VBoxContainer"]
+layout_mode = 2
+text = " "
+
+[node name="Label" type="Label" parent="MarginContainer/VBoxContainer/ExportButton"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+text = "Export Scene"
+horizontal_alignment = 1
+vertical_alignment = 1
