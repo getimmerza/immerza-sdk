@@ -1,5 +1,6 @@
-[gd_scene load_steps=2 format=3 uid="uid://cv6g6s43pnbyr"]
+[gd_scene load_steps=3 format=3 uid="uid://cv6g6s43pnbyr"]
 
+[ext_resource type="Script" path="res://addons/immerza_editor/exporter.gd" id="1_4f12f"]
 [ext_resource type="Texture2D" uid="uid://be5os6trfqsn1" path="res://addons/immerza_editor/logo.svg" id="1_ct1ak"]
 
 [node name="ImmerzaMainScreen" type="CenterContainer"]
@@ -8,6 +9,7 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
+script = ExtResource("1_4f12f")
 
 [node name="MarginContainer" type="MarginContainer" parent="."]
 layout_mode = 2
@@ -46,3 +48,5 @@ grow_vertical = 2
 text = "Export Scene"
 horizontal_alignment = 1
 vertical_alignment = 1
+
+[connection signal="button_down" from="MarginContainer/VBoxContainer/ExportButton" to="." method="_on_export_button_button_down"]
