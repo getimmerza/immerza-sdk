@@ -49,4 +49,6 @@ text = "Export Scene"
 horizontal_alignment = 1
 vertical_alignment = 1
 
+[node name="ImmerzaExport" type="ImmerzaExport" parent="."]
+
 [connection signal="button_down" from="MarginContainer/VBoxContainer/ExportButton" to="." method="_on_export_button_button_down"]
