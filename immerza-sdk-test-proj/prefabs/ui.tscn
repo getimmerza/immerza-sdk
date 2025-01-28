@@ -1,0 +1,22 @@
+[gd_scene load_steps=3 format=3 uid="uid://btfvto6n0umfx"]
+
+[ext_resource type="Script" path="res://addons/god_plot/tools/graphs/graph_2d.gd" id="1_knnwm"]
+[ext_resource type="Script" path="res://scripts/ui.gd" id="1_s2bod"]
+
+[node name="Control" type="Control"]
+layout_mode = 3
+anchors_preset = 0
+offset_right = 1400.0
+offset_bottom = 800.0
+script = ExtResource("1_s2bod")
+
+[node name="Graph2D" type="Control" parent="."]
+layout_mode = 3
+anchors_preset = 0
+offset_right = 1400.0
+offset_bottom = 800.0
+script = ExtResource("1_knnwm")
+x_max = 20.0
+x_decimal_places = 0
+y_max = 0.01
+y_decimal_places = 4
