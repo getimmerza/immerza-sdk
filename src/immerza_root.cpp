@@ -6,7 +6,7 @@ using namespace godot;
 
 void ImmerzaRoot::_bind_methods() 
 {
-
+    
 }
 
 ImmerzaRoot::ImmerzaRoot()

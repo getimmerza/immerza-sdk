@@ -1,7 +1,7 @@
 #include "register_types.h"
 
 #include "immerza_root.h"
-#include "immerza_export.h"
+#include "xr_breathing_detection.h"
 
 #include "gdextension_interface.h"
 #include "godot_cpp/core/defs.hpp"
@@ -17,7 +17,7 @@ void initialize_immerza_module(ModuleInitializationLevel p_level)
     }
 
     GDREGISTER_CLASS(ImmerzaRoot);
-    GDREGISTER_CLASS(ImmerzaExport);
+    GDREGISTER_CLASS(XRBreathingDetection);
 }
 
 void uninitialize_immerza_module(ModuleInitializationLevel p_level)
