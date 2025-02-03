@@ -1,7 +1,6 @@
 #include "register_types.h"
 
 #include "immerza_root.h"
-#include "immerza_export.h"
 
 #include "gdextension_interface.h"
 #include "godot_cpp/core/defs.hpp"
@@ -17,7 +16,6 @@ void initialize_immerza_module(ModuleInitializationLevel p_level)
     }
 
     GDREGISTER_CLASS(ImmerzaRoot);
-    GDREGISTER_CLASS(ImmerzaExport);
 }
 
 void uninitialize_immerza_module(ModuleInitializationLevel p_level)
