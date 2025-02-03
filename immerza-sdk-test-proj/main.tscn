@@ -1,10 +1,6 @@
-[gd_scene load_steps=10 format=3 uid="uid://cyc31y7hb3gdh"]
+[gd_scene load_steps=5 format=3 uid="uid://cyc31y7hb3gdh"]
 
-[ext_resource type="Script" path="res://scripts/xr_setup.gd" id="1_nsqqu"]
 [ext_resource type="PackedScene" uid="uid://ds44oiklbxokc" path="res://prefabs/test.tscn" id="1_wnthe"]
-[ext_resource type="Script" path="res://scripts/breathing_detection.gd" id="2_t343o"]
-[ext_resource type="PackedScene" uid="uid://clujaf3u776a3" path="res://addons/godot-xr-tools/objects/viewport_2d_in_3d.tscn" id="4_byoq7"]
-[ext_resource type="PackedScene" uid="uid://btfvto6n0umfx" path="res://prefabs/ui.tscn" id="5_1bvf7"]
 
 [sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_xbvvi"]
 sky_horizon_color = Color(0.64625, 0.65575, 0.67075, 1)
@@ -19,10 +15,7 @@ sky = SubResource("Sky_mpioe")
 tonemap_mode = 2
 glow_enabled = true
 
-[sub_resource type="SphereMesh" id="SphereMesh_p22v3"]
-
 [node name="Main" type="Node3D"]
-script = ExtResource("1_nsqqu")
 
 [node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]
 transform = Transform3D(-0.866023, -0.433016, 0.250001, 0, 0.499998, 0.866027, -0.500003, 0.749999, -0.43301, 0, 3.11357, 0)
@@ -31,37 +24,7 @@ shadow_enabled = true
 [node name="WorldEnvironment" type="WorldEnvironment" parent="."]
 environment = SubResource("Environment_h2d5u")
 
+[node name="Camera3D" type="Camera3D" parent="."]
+
 [node name="Test" parent="." instance=ExtResource("1_wnthe")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -3.21282)
-
-[node name="XROrigin3D" type="XROrigin3D" parent="." node_paths=PackedStringArray("vr_controller")]
-script = ExtResource("2_t343o")
-vr_controller = NodePath("LeftController")
-
-[node name="XRCamera3D" type="XRCamera3D" parent="XROrigin3D"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.7, 0)
-current = true
-
-[node name="LeftController" type="XRController3D" parent="XROrigin3D"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.5, 1, -0.5)
-tracker = &"left_hand"
-
-[node name="MeshInstance3D" type="MeshInstance3D" parent="XROrigin3D/LeftController"]
-transform = Transform3D(0.1, 0, 0, 0, 0.1, 0, 0, 0, 0.1, 0, 0, 0)
-mesh = SubResource("SphereMesh_p22v3")
-
-[node name="RightController" type="XRController3D" parent="XROrigin3D"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.5, 1, -0.5)
-tracker = &"right_hand"
-
-[node name="MeshInstance3D" type="MeshInstance3D" parent="XROrigin3D/RightController"]
-transform = Transform3D(0.1, 0, 0, 0, 0.1, 0, 0, 0, 0.1, 0, 0, 0)
-mesh = SubResource("SphereMesh_p22v3")
-
-[node name="Viewport2Din3D" parent="." instance=ExtResource("4_byoq7")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.48998, -3.63213)
-scene = ExtResource("5_1bvf7")
-viewport_size = Vector2(1400, 800)
-transparent = 0
-unshaded = true
-scene_properties_keys = PackedStringArray("ui.gd")
