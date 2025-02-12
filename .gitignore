@@ -75,3 +75,4 @@ crashlytics-build.properties
 /ImmerzaBundles
 /ImmerzaSceneCache
 /.utmp
+/Assets/immerza-sdk-package
