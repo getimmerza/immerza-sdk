@@ -46,13 +46,30 @@ public class ImmerzaSceneBundler : EditorWindow
     public void CreateGUI()
     {
         VisualElement root = rootVisualElement;
-        treeAsset = AssetDatabase.LoadAssetAtPath<VisualTreeAsset>("Assets/Editor/Immerza/ImmerzaSceneBundlerUI.uxml");
-
-        root.Add(new Label());
-        Image immerzaLogo = new Image();
+        if (IsRunningInPackage())
+		{
+			treeAsset = AssetDatabase.LoadAssetAtPath<VisualTreeAsset>("Packages/com.actimi.immerzasdk/Editor/Immerza/ImmerzaSceneBundlerUI.uxml");
+		}
+		else
+		{
+			treeAsset = AssetDatabase.LoadAssetAtPath<VisualTreeAsset>("Assets/Editor/Immerza/ImmerzaSceneBundlerUI.uxml");
+		}
+		root.Add(new Label());
+		Image immerzaLogo = new Image();
         immerzaLogo.scaleMode = ScaleMode.ScaleToFit;
-        immerzaLogo.sprite = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Editor/Immerza/Assets/ImmerzaLogo.png");
+		if (IsRunningInPackage())
+		{
+            immerzaLogo.sprite = AssetDatabase.LoadAssetAtPath<Sprite>("Packages/com.actimi.immerzasdk/Editor/Immerza/Assets/ImmerzaLogo.png");
+		}
+		else
+		{
+            immerzaLogo.sprite = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Editor/Immerza/Assets/ImmerzaLogo.png");
+		}
+
         immerzaLogo.style.marginTop = 20.0f;
+        immerzaLogo.style.marginLeft = 10.0f;
+        immerzaLogo.style.marginRight = 10.0f;
+        immerzaLogo.style.marginBottom = 5.0f;
         root.Add(immerzaLogo);
 
         treeAsset.CloneTree(root);
@@ -207,7 +224,10 @@ public class ImmerzaSceneBundler : EditorWindow
                                         {
                                             if (@object.scene.name == null)
                                             {
-                                                // Prefab implementation
+                                                string assetPath = AssetDatabase.GetAssetPath(fieldData);
+                                                assetPaths.Add(assetPath);
+                                                storedReferences.Add(assetPath);
+                                                fieldValue.serializationType = ImmerzaSDK.Types.ValueType.ArrayAssetReference;
                                             }
                                             else
                                             {
@@ -371,6 +391,11 @@ public class ImmerzaSceneBundler : EditorWindow
         AssetDatabase.DeleteAsset(newScenePath);
         AssetDatabase.DeleteAsset(assemblyAssetPath);
         SetSuccessMsg(true);
+    }
+
+    private static bool IsRunningInPackage()
+    {
+        return AssetDatabase.IsValidFolder("Packages/com.actimi.immerzasdk");
     }
 
     private bool CompileAssembly()
