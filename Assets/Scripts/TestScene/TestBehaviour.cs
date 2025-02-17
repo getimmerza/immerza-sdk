@@ -7,6 +7,9 @@ public class TestBehaviour : MonoBehaviour
     [SerializeField]
     private GameObject movingCube = null;
 
+    [SerializeField] 
+    private Transform testPosition;
+
     [SerializeField]
     private Light movingLight = null;
 
@@ -40,7 +43,7 @@ public class TestBehaviour : MonoBehaviour
         float x = Mathf.Cos(Time.time);
         float y = Mathf.Sin(Time.time);
 
-        movingCube.transform.SetPositionAndRotation(new Vector3(x, y, 0), Quaternion.Euler(x * 360.0f, 0.0f, y * 360.0f));
+        movingCube.transform.SetPositionAndRotation(new Vector3(testPosition.position.x + x, testPosition.position.y + y, testPosition.position.z), Quaternion.Euler(x * 360.0f, 0.0f, y * 360.0f));
 
         movingLight.intensity = baseIntensity * Mathf.Abs(x);
     }

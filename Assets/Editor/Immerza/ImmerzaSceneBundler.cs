@@ -26,8 +26,8 @@ public class ImmerzaSceneBundler : EditorWindow
     private ListView scenesView = null;
     private TextField path = null;
     private TextField scriptsPath = null;
-    private EnumField buildTarget = null;
     private Button exportBtn = null;
+    private Button refreshBtn = null;
     private Label successLabel = null;
 
     string unityAssembliesPath = Path.Combine(EditorApplication.applicationContentsPath, "Managed");
@@ -35,6 +35,13 @@ public class ImmerzaSceneBundler : EditorWindow
     //string packageAssembliesPath = Path.Combine(Path.GetDirectoryName(Application.dataPath), "Library", "ScriptAssemblies");
 
     private string sceneCachePath = Path.Combine(Path.GetDirectoryName(Application.dataPath), "ImmerzaSceneCache");
+
+    private enum CompilationState
+    {
+        FAILED,
+        NO_FILES,
+        SUCCESS
+    };
 
     [MenuItem("Immerza/Scene Bundler")]
     public static void ShowSceneBundler()
@@ -77,14 +84,25 @@ public class ImmerzaSceneBundler : EditorWindow
         scenesView = root.Q<ListView>("SceneList");
         path = root.Q<TextField>("ExportPath");
         scriptsPath = root.Q<TextField>("ScriptsPath");
-        buildTarget = root.Q<EnumField>("PlatformEnum");
-        buildTarget.Init(BuildTarget.Android);
         exportBtn = root.Q<Button>("ExportButton");
         exportBtn.SetEnabled(false);
         exportBtn.style.backgroundColor = new UnityEngine.Color(0.2f, 0.2f, 0.2f);
         exportBtn.style.color = new UnityEngine.Color(0.3f, 0.3f, 0.3f);
+        refreshBtn = root.Q<Button>("RefreshButton");
         successLabel = root.Q<Label>("SuccessLabel");
         successLabel.visible = false;
+
+        UpdateSceneList();
+
+        scenesView.selectionChanged += SceneSelected;
+        exportBtn.clicked += ExportScene;
+        refreshBtn.clicked += UpdateSceneList;
+    }
+
+    private void UpdateSceneList()
+    {
+        scenesView.ClearSelection();
+        scenesView.itemsSource = null;
 
         string[] allSceneGuids = AssetDatabase.FindAssets("t:SceneAsset", new[] { "Assets" });
         List<SceneAsset> allScenes = new List<SceneAsset>();
@@ -97,13 +115,12 @@ public class ImmerzaSceneBundler : EditorWindow
         scenesView.makeItem = () => new Label();
         scenesView.bindItem = (item, index) => { (item as Label).text = allScenes[index].name; };
         scenesView.itemsSource = allScenes;
-
-        scenesView.selectionChanged += SceneSelected;
-        exportBtn.clicked += ExportScene;
     }
 
     private void SceneSelected(IEnumerable<object> scenes)
     {
+        if (!scenes.Any()) { return; }
+
         SceneAsset scene = scenes.First() as SceneAsset;
         if (scene == null)
         {
@@ -119,7 +136,9 @@ public class ImmerzaSceneBundler : EditorWindow
 
     private void ExportScene()
     {
-        if (!CompileAssembly())
+        CompilationState compilationState = CompileAssembly();
+
+        if (compilationState == CompilationState.FAILED)
         {
             return;
         }
@@ -148,6 +167,115 @@ public class ImmerzaSceneBundler : EditorWindow
 
         Scene activeScene = EditorSceneManager.OpenScene(newScenePath);
 
+        if (compilationState != CompilationState.NO_FILES)
+        {
+            GatherAndSerialize(ref assetPaths, ref assetMetadata, newScenePath, originalScenePath);
+        }
+
+        EditorSceneManager.SaveScene(activeScene);
+
+        string scenePath = activeScene.path;
+        assetMetadata.AddAsset("ImmerzaScene", scenePath);
+
+        string assemblyAssetPath = scriptsPath.text + "/" + sceneToExport.name + ".dll.txt";
+
+        if (compilationState != CompilationState.NO_FILES)
+        {
+            string assemblyPath = Path.Combine(sceneCachePath, sceneToExport.name, sceneToExport.name + ".dll");
+            File.Copy(assemblyPath, assemblyAssetPath);
+            AssetDatabase.ImportAsset(assemblyAssetPath);
+            AssetDatabase.Refresh();
+            assetPaths.Add(assemblyAssetPath);
+            assetMetadata.AddAsset("ImmerzaAssembly", assemblyAssetPath);
+        }
+        else
+        {
+            if (IsRunningInPackage())
+            {
+                assetPaths.Add("Packages/com.actimi.immerzasdk/Editor/Immerza/Assets/DummyFile.txt");
+                assetMetadata.AddAsset("Gen", "NONE");
+            }
+            else
+            {
+                assetPaths.Add("Assets/Editor/Immerza/Assets/DummyFile.txt");
+                assetMetadata.AddAsset("Gen", "NONE");
+            }
+        }
+
+        AssetBundleBuild[] exportMap = new AssetBundleBuild[2];
+
+        exportMap[0].assetBundleName = "immerza_scene";
+        exportMap[0].assetNames = new[] { scenePath };
+
+        exportMap[1].assetBundleName = "immerza_assets";
+        exportMap[1].assetNames = assetPaths.ToArray();
+
+        BuildPipeline.BuildAssetBundles(bundleDir, exportMap, BuildAssetBundleOptions.None, BuildTarget.Android);
+
+        sceneMetadata.assetMetaData = assetMetadata;
+
+        try
+        {
+            EditorSceneManager.OpenScene(originalScenePath);
+
+            File.Delete(Path.Combine(bundleDir, path.text));
+            File.Delete(Path.Combine(bundleDir, path.text + ".manifest"));
+            File.Delete(Path.Combine(bundleDir, "immerza_scene.manifest"));
+            File.Delete(Path.Combine(bundleDir, "immerza_assets.manifest"));
+
+            string archivePath = Path.Combine(bundleDir, "immerza_data.bundle");
+
+            if (File.Exists(archivePath))
+            {
+                File.Delete(archivePath);
+            }
+
+            using (Stream stream = File.OpenWrite(archivePath))
+            using (IWriter writer = WriterFactory.Open(stream, ArchiveType.Tar, SharpCompress.Common.CompressionType.GZip))
+            {
+                writer.Write("immerza_scene.bundle", Path.Combine(bundleDir, "immerza_scene"));
+                writer.Write("immerza_assets.bundle", Path.Combine(bundleDir, "immerza_assets"));
+            }
+
+            byte[] dataScene = File.ReadAllBytes(Path.Combine(bundleDir, "immerza_scene"));
+            byte[] dataAssets= File.ReadAllBytes(Path.Combine(bundleDir, "immerza_assets"));
+
+            byte[] combined = new byte[dataScene.Length + dataAssets.Length];
+            Buffer.BlockCopy(dataScene, 0, combined, 0, dataScene.Length);
+            Buffer.BlockCopy(dataAssets, 0, combined, dataScene.Length, dataAssets.Length);
+
+            uint crc = 0xffffffff;
+            crc = ImmerzaUtil.ComputeChecksum(combined);
+
+            sceneMetadata.hash = crc;
+            sceneMetadata.sceneID = "0";
+            sceneMetadata.SaveMetaData(Path.Combine(bundleDir, "immerza_metadata.json"));
+
+            File.Delete(Path.Combine(bundleDir, "immerza_scene"));
+            File.Delete(Path.Combine(bundleDir, "immerza_assets"));
+        }
+        catch (Exception exc)
+        {
+            UnityEngine.Debug.LogException(exc);
+            EditorSceneManager.OpenScene(originalScenePath);
+            AssetDatabase.DeleteAsset(newScenePath);
+            AssetDatabase.DeleteAsset(assemblyAssetPath);
+            SetSuccessMsg(false);
+            return;
+        }
+
+        AssetDatabase.DeleteAsset(newScenePath);
+        AssetDatabase.DeleteAsset(assemblyAssetPath);
+        SetSuccessMsg(true);
+    }
+
+    private static bool IsRunningInPackage()
+    {
+        return AssetDatabase.IsValidFolder("Packages/com.actimi.immerzasdk");
+    }
+
+    private void GatherAndSerialize(ref List<string> assetPaths, ref AssetMetadata assetMetadata, string newScenePath, string originalScenePath)
+    {
         string[] scriptGUIDs = AssetDatabase.FindAssets("t:MonoScript", new[] { scriptsPath.text });
         HashSet<string> validClassNames = new HashSet<string>();
 
@@ -290,8 +418,6 @@ public class ImmerzaSceneBundler : EditorWindow
                                         serializationType = ImmerzaSDK.Types.ValueType.SingleValue
                                     };
 
-                                    Debug.Log(field.FieldType.Name);
-
                                     values.Add(field.Name, fieldValue);
                                 }
                             }
@@ -312,97 +438,21 @@ public class ImmerzaSceneBundler : EditorWindow
             SetSuccessMsg(false);
             return;
         }
-
-        EditorSceneManager.SaveScene(activeScene);
-
-        string scenePath = activeScene.path;
-        assetMetadata.AddAsset("ImmerzaScene", scenePath);
-
-        string assemblyAssetPath = scriptsPath.text + "/" + sceneToExport.name + ".dll.txt";
-        string assemblyPath = Path.Combine(sceneCachePath, sceneToExport.name, sceneToExport.name + ".dll");
-        File.Copy(assemblyPath, assemblyAssetPath);
-        AssetDatabase.ImportAsset(assemblyAssetPath);
-        AssetDatabase.Refresh();
-        assetPaths.Add(assemblyAssetPath);
-        assetMetadata.AddAsset("ImmerzaAssembly", assemblyAssetPath);
-
-        AssetBundleBuild[] exportMap = new AssetBundleBuild[2];
-
-        exportMap[0].assetBundleName = "immerza_scene";
-        exportMap[0].assetNames = new[] { scenePath };
-
-        exportMap[1].assetBundleName = "immerza_assets";
-        exportMap[1].assetNames = assetPaths.ToArray();
-
-        BuildPipeline.BuildAssetBundles(bundleDir, exportMap, BuildAssetBundleOptions.None, (BuildTarget)buildTarget.value);
-
-        sceneMetadata.assetMetaData = assetMetadata;
-
-        try
-        {
-            EditorSceneManager.OpenScene(originalScenePath);
-
-            File.Delete(Path.Combine(bundleDir, path.text));
-            File.Delete(Path.Combine(bundleDir, path.text + ".manifest"));
-            File.Delete(Path.Combine(bundleDir, "immerza_scene.manifest"));
-            File.Delete(Path.Combine(bundleDir, "immerza_assets.manifest"));
-
-            string archivePath = Path.Combine(bundleDir, "immerza_data.bundle");
-
-            if (File.Exists(archivePath))
-            {
-                File.Delete(archivePath);
-            }
-
-            using (Stream stream = File.OpenWrite(archivePath))
-            using (IWriter writer = WriterFactory.Open(stream, ArchiveType.Tar, SharpCompress.Common.CompressionType.GZip))
-            {
-                writer.Write("immerza_scene.bundle", Path.Combine(bundleDir, "immerza_scene"));
-                writer.Write("immerza_assets.bundle", Path.Combine(bundleDir, "immerza_assets"));
-            }
-
-            byte[] dataScene = File.ReadAllBytes(Path.Combine(bundleDir, "immerza_scene"));
-            byte[] dataAssets= File.ReadAllBytes(Path.Combine(bundleDir, "immerza_assets"));
-
-            byte[] combined = new byte[dataScene.Length + dataAssets.Length];
-            Buffer.BlockCopy(dataScene, 0, combined, 0, dataScene.Length);
-            Buffer.BlockCopy(dataAssets, 0, combined, dataScene.Length, dataAssets.Length);
-
-            uint crc = 0xffffffff;
-            crc = ImmerzaUtil.ComputeChecksum(combined);
-
-            sceneMetadata.hash = crc;
-            sceneMetadata.sceneID = "0";
-            sceneMetadata.SaveMetaData(Path.Combine(bundleDir, "immerza_metadata.json"));
-
-            File.Delete(Path.Combine(bundleDir, "immerza_scene"));
-            File.Delete(Path.Combine(bundleDir, "immerza_assets"));
-        }
-        catch (Exception exc)
-        {
-            UnityEngine.Debug.LogException(exc);
-            EditorSceneManager.OpenScene(originalScenePath);
-            AssetDatabase.DeleteAsset(newScenePath);
-            AssetDatabase.DeleteAsset(assemblyAssetPath);
-            SetSuccessMsg(false);
-            return;
-        }
-
-        AssetDatabase.DeleteAsset(newScenePath);
-        AssetDatabase.DeleteAsset(assemblyAssetPath);
-        SetSuccessMsg(true);
     }
 
-    private static bool IsRunningInPackage()
-    {
-        return AssetDatabase.IsValidFolder("Packages/com.actimi.immerzasdk");
-    }
-
-    private bool CompileAssembly()
+    private CompilationState CompileAssembly()
     {
         if (!Directory.Exists(Path.Combine(sceneCachePath, sceneToExport.name)))
         {
             Directory.CreateDirectory(Path.Combine(sceneCachePath, sceneToExport.name));
+        }
+
+        string scriptFolderPath = Path.Combine(Path.GetDirectoryName(Application.dataPath), scriptsPath.text);
+
+        if (!Directory.EnumerateFileSystemEntries(scriptFolderPath).Any())
+        {
+            Debug.Log("Script folder " + scriptsPath.text + " is empty!");
+            return CompilationState.NO_FILES;
         }
 
         ImmerzaUtil.CopyDirectory(
@@ -429,8 +479,6 @@ public class ImmerzaSceneBundler : EditorWindow
         args += @$"/out:""{Path.Combine(sceneCachePath, sceneToExport.name, sceneToExport.name + ".dll")}"" ";
         args += @$"""{Path.Combine(sceneCachePath, sceneToExport.name, "*.cs")}"" ";
 
-        UnityEngine.Debug.Log(args);
-
         System.Diagnostics.ProcessStartInfo processInfo = new()
         {
             CreateNoWindow = false,
@@ -438,24 +486,53 @@ public class ImmerzaSceneBundler : EditorWindow
             FileName = dotnetPath,
             WindowStyle = System.Diagnostics.ProcessWindowStyle.Normal,
             RedirectStandardError = true,
+            RedirectStandardOutput = true,
             WorkingDirectory = dotnetPath.Split("dotnet")[0],
 
             Arguments = args
         };
 
+        Debug.Log("Compiler output started!");
+
         Process compilerProcess = new();
         compilerProcess.StartInfo = processInfo;
-        compilerProcess.ErrorDataReceived += (sender, args) => Debug.Log($"Error: {args.Data}");
+        compilerProcess.ErrorDataReceived += (sender, args) => 
+        {
+            if (!string.IsNullOrEmpty(args.Data))
+            {
+                Debug.LogError($"Compiler error: {args.Data}");
+            }
+        };
+
+        compilerProcess.OutputDataReceived += (sender, args) =>
+        {
+            if (!string.IsNullOrEmpty(args.Data))
+            {
+                if (args.Data.Contains("warning"))
+                {
+                    Debug.LogWarning(args.Data);
+                }
+                else
+                {
+                    Debug.Log(args.Data);
+                }
+            }
+        };
+
         if (!compilerProcess.Start())
         {
             SetSuccessMsg(false, "Compiler has not been found!");
             UnityEngine.Debug.LogError("Check if the path is correct: " + dotnetPath);
-            return false;
+            return CompilationState.FAILED;
         }
 
         compilerProcess.BeginErrorReadLine();
+        compilerProcess.BeginOutputReadLine();
         compilerProcess.WaitForExit();
-        return true;
+
+        Debug.Log("Compiler output stopped!");
+
+        return CompilationState.SUCCESS;
     }
 
     private void SetSuccessMsg(bool success, string message)
