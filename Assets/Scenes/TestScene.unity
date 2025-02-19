@@ -441,6 +441,8 @@ MonoBehaviour:
   movingLight: {fileID: 345128253}
   baseIntensity: 10
   stringTest: immerza
+  testColor: {r: 1, g: 0, b: 0, a: 0.69411767}
+  chosenAnimationType: 1
   testAssetReferences:
   - {fileID: 2100000, guid: 13914e7153007a34a8899c925481b138, type: 2}
   - {fileID: 2100000, guid: 5c5950800d86daf49903b2650abacb5b, type: 2}
@@ -492,6 +494,51 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &1934170139
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1934170141}
+  - component: {fileID: 1934170142}
+  m_Layer: 0
+  m_Name: BGTest
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1934170141
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1934170139}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1934170142
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1934170139}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cfe114e798dc4904fb7a47d213d1740a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  testBehaviour: {fileID: 474714844}
 --- !u!1001 &1976930976
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -644,5 +691,6 @@ SceneRoots:
   - {fileID: 1680522573}
   - {fileID: 2074937363}
   - {fileID: 474714845}
+  - {fileID: 1934170141}
   - {fileID: 415306092}
   - {fileID: 1976930976}

@@ -10,6 +10,8 @@ namespace ImmerzaSDK.Types
         public string sceneID;
         [JsonProperty("hash")]
         public uint hash;
+        [JsonProperty("sdk_version")]
+        public string sdkVersion;
 
         [JsonProperty("asset_metadata")]
         public AssetMetadata assetMetaData;
