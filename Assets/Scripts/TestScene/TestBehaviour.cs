@@ -16,8 +16,13 @@ public class TestBehaviour : MonoBehaviour
     [SerializeField]
     private float baseIntensity;
 
+    public string stringTest = "Hello";
+
     [SerializeField]
-    private string stringTest = "Hello";
+    private Color testColor;
+
+    [SerializeField]
+    private AnimationType chosenAnimationType;
 
     /*[SerializeField] private List<int> testListInt = new();
 
@@ -46,5 +51,11 @@ public class TestBehaviour : MonoBehaviour
         movingCube.transform.SetPositionAndRotation(new Vector3(testPosition.position.x + x, testPosition.position.y + y, testPosition.position.z), Quaternion.Euler(x * 360.0f, 0.0f, y * 360.0f));
 
         movingLight.intensity = baseIntensity * Mathf.Abs(x);
+    }
+
+    public enum AnimationType
+    {
+        isSwimToSpin,
+        isSwimToJump
     }
 }

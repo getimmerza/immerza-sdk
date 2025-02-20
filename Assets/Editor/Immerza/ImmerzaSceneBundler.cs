@@ -16,7 +16,7 @@ using ImmerzaSDK.Util;
 using System.Diagnostics;
 using Debug = UnityEngine.Debug;
 using System.Collections;
-using SharpCompress;
+using Newtonsoft.Json.Linq;
 
 public class ImmerzaSceneBundler : EditorWindow
 {
@@ -30,9 +30,8 @@ public class ImmerzaSceneBundler : EditorWindow
     private Button refreshBtn = null;
     private Label successLabel = null;
 
-    string unityAssembliesPath = Path.Combine(EditorApplication.applicationContentsPath, "Managed");
-    string generalAssembliesPath = Path.Combine(EditorApplication.applicationContentsPath, "UnityReferenceAssemblies", "unity-4.8-api");
-    //string packageAssembliesPath = Path.Combine(Path.GetDirectoryName(Application.dataPath), "Library", "ScriptAssemblies");
+    //string unityAssembliesPath = Path.Combine(EditorApplication.applicationContentsPath, "Managed");
+    //string generalAssembliesPath = Path.Combine(EditorApplication.applicationContentsPath, "UnityReferenceAssemblies", "unity-4.8-api");
 
     private string sceneCachePath = Path.Combine(Path.GetDirectoryName(Application.dataPath), "ImmerzaSceneCache");
 
@@ -115,6 +114,10 @@ public class ImmerzaSceneBundler : EditorWindow
         scenesView.makeItem = () => new Label();
         scenesView.bindItem = (item, index) => { (item as Label).text = allScenes[index].name; };
         scenesView.itemsSource = allScenes;
+
+        exportBtn.SetEnabled(false);
+        exportBtn.style.backgroundColor = new UnityEngine.Color(0.2f, 0.2f, 0.2f);
+        exportBtn.style.color = new UnityEngine.Color(0.3f, 0.3f, 0.3f);
     }
 
     private void SceneSelected(IEnumerable<object> scenes)
@@ -160,7 +163,7 @@ public class ImmerzaSceneBundler : EditorWindow
         }
 
         string originalScenePath = SceneManager.GetActiveScene().path;
-        string newScenePath = originalScenePath.Replace(".unity", "_Temp.unity");
+        string newScenePath = originalScenePath.Replace(".unity", "_Export.unity");
 
         AssetDatabase.CopyAsset(originalScenePath, newScenePath);
         AssetDatabase.Refresh();
@@ -249,6 +252,8 @@ public class ImmerzaSceneBundler : EditorWindow
 
             sceneMetadata.hash = crc;
             sceneMetadata.sceneID = "0";
+            sceneMetadata.sdkVersion = IsRunningInPackage() ? GetPackageVersion() : "dev";
+            sceneMetadata.isUsingBgMusic = FindAnyObjectByType<BackgroundAudio>(FindObjectsInactive.Include) != null;
             sceneMetadata.SaveMetaData(Path.Combine(bundleDir, "immerza_metadata.json"));
 
             File.Delete(Path.Combine(bundleDir, "immerza_scene"));
@@ -277,7 +282,7 @@ public class ImmerzaSceneBundler : EditorWindow
     private void GatherAndSerialize(ref List<string> assetPaths, ref AssetMetadata assetMetadata, string newScenePath, string originalScenePath)
     {
         string[] scriptGUIDs = AssetDatabase.FindAssets("t:MonoScript", new[] { scriptsPath.text });
-        HashSet<string> validClassNames = new HashSet<string>();
+        HashSet<string> validClassNames = new();
 
         foreach (string scriptGUID in scriptGUIDs)
         {
@@ -297,18 +302,28 @@ public class ImmerzaSceneBundler : EditorWindow
             }
         }
 
+        AppDomain.CurrentDomain.AssemblyResolve += (sender, args) =>
+        {
+            Console.WriteLine($"Skipping unresolved reference: {args.Name}");
+            return null; // Returning null allows the main assembly to still load
+        };
+
+        Assembly compiledAssembly = Assembly.LoadFrom(Path.Combine(sceneCachePath, sceneToExport.name, sceneToExport.name + ".dll"));
+
         try
         {
+            List<MonoBehaviour> customScripts = new();
             foreach (GameObject obj in SceneManager.GetActiveScene().GetRootGameObjects())
             {
                 MonoBehaviour[] scripts = obj.GetComponentsInChildren<MonoBehaviour>(true);
 
-                foreach (MonoBehaviour script in scripts)
+                foreach (MonoBehaviour script in scripts) // Serialization
                 {
                     Type classType = script.GetType();
 
                     if (validClassNames.Contains(classType.Name))
                     {
+                        customScripts.Add(script);
                         FieldInfo[] fields = classType.GetFields(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
                         Dictionary<string, ValueField> values = new Dictionary<string, ValueField>();
 
@@ -387,6 +402,13 @@ public class ImmerzaSceneBundler : EditorWindow
                                 }
                                 else if (field.FieldType.IsClass && field.FieldType != typeof(string) && field.FieldType.IsSubclassOf(typeof(UnityEngine.Object)))
                                 {
+                                    ValueField fieldValue = new ValueField()
+                                    {
+                                        value = "",
+                                        type = field.FieldType,
+                                        serializationType = ImmerzaSDK.Types.ValueType.SingleReference
+                                    };
+
                                     UnityEngine.Object fieldData = (UnityEngine.Object)field.GetValue(script);
 
                                     GameObject fieldGameObject = null;
@@ -398,14 +420,14 @@ public class ImmerzaSceneBundler : EditorWindow
                                     else if (fieldData is UnityEngine.Component component)
                                     {
                                         fieldGameObject = component.gameObject;
+
+                                        if (customScripts.FirstOrDefault(val => val.GetType() == field.FieldType) != null)
+                                        {
+                                            fieldValue.type = compiledAssembly.GetType(field.FieldType.FullName);
+                                        }
                                     }
 
-                                    ValueField fieldValue = new ValueField()
-                                    {
-                                        value = ImmerzaUtil.GetHierarchyPath(fieldGameObject),
-                                        type = field.FieldType,
-                                        serializationType = ImmerzaSDK.Types.ValueType.SingleReference
-                                    };
+                                    fieldValue.value = ImmerzaUtil.GetHierarchyPath(fieldGameObject);
 
                                     values.Add(field.Name, fieldValue);
                                 }
@@ -424,9 +446,13 @@ public class ImmerzaSceneBundler : EditorWindow
                         }
 
                         assetMetadata.AddComponent(ImmerzaUtil.GetHierarchyPath(script.gameObject), classType.Name, values);
-                        DestroyImmediate(script);
                     }
                 }
+            }
+
+            foreach (MonoBehaviour script in customScripts)
+            {
+                DestroyImmediate(script);
             }
         }
         catch (Exception exc)
@@ -474,7 +500,45 @@ public class ImmerzaSceneBundler : EditorWindow
         args += "/target:library ";
 
         args += $"/reference:{Path.Combine(new string[] { "..", "NetStandard", "ref", "2.1.0", "netstandard.dll" })} ";
-        args += $"/reference:{Path.Combine(new string[] { "..", "Managed", "UnityEngine.dll" })} ";
+
+        string basePath = Path.Combine(Path.GetDirectoryName(Application.dataPath), "Library", "ScriptAssemblies");
+
+        IEnumerable<string> paths = Directory.EnumerateFiles(basePath, "*.dll", SearchOption.AllDirectories)
+                        .Where(file =>
+                        {
+                            return file.Contains("Unity") && 
+                            !file.Contains("Editor") && 
+                            !file.Contains("VisualScripting") &&
+                            !file.Contains("RenderPipelines") &&
+                            !file.Contains("RenderPipeline") &&
+                            !file.Contains("Burst");
+                        });
+
+        foreach (string path in paths)
+        {
+            args += $"/reference:{path} ";
+        }
+
+        string unityAssemblyPath = Path.Combine("..", "Managed", "UnityEngine");
+
+        args += $"/reference:{Path.Combine(unityAssemblyPath, "UnityEngine.CoreModule.dll")} ";
+        args += $"/reference:{Path.Combine(unityAssemblyPath, "UnityEngine.AIModule.dll")} ";
+        args += $"/reference:{Path.Combine(unityAssemblyPath, "UnityEngine.AnimationModule.dll")} ";
+        args += $"/reference:{Path.Combine(unityAssemblyPath, "UnityEngine.ARModule.dll")} ";
+        args += $"/reference:{Path.Combine(unityAssemblyPath, "UnityEngine.AudioModule.dll")} ";
+        args += $"/reference:{Path.Combine(unityAssemblyPath, "UnityEngine.HierarchyCoreModule.dll")} ";
+        args += $"/reference:{Path.Combine(unityAssemblyPath, "UnityEngine.ImageConversionModule.dll")} ";
+        args += $"/reference:{Path.Combine(unityAssemblyPath, "UnityEngine.InputForUIModule.dll")} ";
+        args += $"/reference:{Path.Combine(unityAssemblyPath, "UnityEngine.InputModule.dll")} ";
+        args += $"/reference:{Path.Combine(unityAssemblyPath, "UnityEngine.ParticleSystemModule.dll")} ";
+        args += $"/reference:{Path.Combine(unityAssemblyPath, "UnityEngine.PhysicsModule.dll")} ";
+        args += $"/reference:{Path.Combine(unityAssemblyPath, "UnityEngine.SpriteMaskModule.dll")} ";
+        args += $"/reference:{Path.Combine(unityAssemblyPath, "UnityEngine.SpriteShapeModule.dll")} ";
+        args += $"/reference:{Path.Combine(unityAssemblyPath, "UnityEngine.UIModule.dll")} ";
+        args += $"/reference:{Path.Combine(unityAssemblyPath, "UnityEngine.VFXModule.dll")} ";
+        args += $"/reference:{Path.Combine(unityAssemblyPath, "UnityEngine.VideoModule.dll")} ";
+        args += $"/reference:{Path.Combine(unityAssemblyPath, "UnityEngine.VRModule.dll")} ";
+        args += $"/reference:{Path.Combine(unityAssemblyPath, "UnityEngine.XRModule.dll")} ";
 
         args += @$"/out:""{Path.Combine(sceneCachePath, sceneToExport.name, sceneToExport.name + ".dll")}"" ";
         args += @$"""{Path.Combine(sceneCachePath, sceneToExport.name, "*.cs")}"" ";
@@ -512,6 +576,10 @@ public class ImmerzaSceneBundler : EditorWindow
                 {
                     Debug.LogWarning(args.Data);
                 }
+                else if (args.Data.Contains("error"))
+                {
+                    Debug.LogError(args.Data);
+                }
                 else
                 {
                     Debug.Log(args.Data);
@@ -548,6 +616,14 @@ public class ImmerzaSceneBundler : EditorWindow
             successLabel.style.color = new Color(1.0f, 0.36f, 0.36f);
             successLabel.text = message == null ? message : "Scene export failed.";
         }
+    }
+
+    private string GetPackageVersion()
+    {
+        TextAsset packageAsset = (TextAsset)AssetDatabase.LoadAssetAtPath("Packages/com.actimi.immerzasdk/package.json", typeof(TextAsset));
+        JObject jsonPackage = JObject.Parse(packageAsset.text);
+
+        return jsonPackage["version"]?.ToString();
     }
 
     private void SetSuccessMsg(bool success)

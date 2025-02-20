@@ -17,7 +17,8 @@
         "SharpCompress.dll",
         "System.Runtime.CompilerServices.Unsafe.dll",
         "ZstdSharp.dll",
-        "Newtonsoft.Json.dll"
+        "Newtonsoft.Json.dll",
+        "Mono.Cecil.dll"
     ],
     "autoReferenced": true,
     "defineConstraints": [],
