@@ -17,7 +17,6 @@ using System.Diagnostics;
 using Debug = UnityEngine.Debug;
 using System.Collections;
 using Newtonsoft.Json.Linq;
-using Mono.Cecil;
 
 public class ImmerzaSceneBundler : EditorWindow
 {
@@ -31,9 +30,8 @@ public class ImmerzaSceneBundler : EditorWindow
     private Button refreshBtn = null;
     private Label successLabel = null;
 
-    string unityAssembliesPath = Path.Combine(EditorApplication.applicationContentsPath, "Managed");
-    string generalAssembliesPath = Path.Combine(EditorApplication.applicationContentsPath, "UnityReferenceAssemblies", "unity-4.8-api");
-    //string packageAssembliesPath = Path.Combine(Path.GetDirectoryName(Application.dataPath), "Library", "ScriptAssemblies");
+    //string unityAssembliesPath = Path.Combine(EditorApplication.applicationContentsPath, "Managed");
+    //string generalAssembliesPath = Path.Combine(EditorApplication.applicationContentsPath, "UnityReferenceAssemblies", "unity-4.8-api");
 
     private string sceneCachePath = Path.Combine(Path.GetDirectoryName(Application.dataPath), "ImmerzaSceneCache");
 
@@ -165,7 +163,7 @@ public class ImmerzaSceneBundler : EditorWindow
         }
 
         string originalScenePath = SceneManager.GetActiveScene().path;
-        string newScenePath = originalScenePath.Replace(".unity", "_Temp.unity");
+        string newScenePath = originalScenePath.Replace(".unity", "_Export.unity");
 
         AssetDatabase.CopyAsset(originalScenePath, newScenePath);
         AssetDatabase.Refresh();
@@ -255,6 +253,7 @@ public class ImmerzaSceneBundler : EditorWindow
             sceneMetadata.hash = crc;
             sceneMetadata.sceneID = "0";
             sceneMetadata.sdkVersion = IsRunningInPackage() ? GetPackageVersion() : "dev";
+            sceneMetadata.isUsingBgMusic = FindAnyObjectByType<BackgroundAudio>(FindObjectsInactive.Include) != null;
             sceneMetadata.SaveMetaData(Path.Combine(bundleDir, "immerza_metadata.json"));
 
             File.Delete(Path.Combine(bundleDir, "immerza_scene"));
@@ -501,7 +500,6 @@ public class ImmerzaSceneBundler : EditorWindow
         args += "/target:library ";
 
         args += $"/reference:{Path.Combine(new string[] { "..", "NetStandard", "ref", "2.1.0", "netstandard.dll" })} ";
-        args += $"/reference:{Path.Combine(new string[] { "..", "Managed", "UnityEngine.dll" })} ";
 
         string basePath = Path.Combine(Path.GetDirectoryName(Application.dataPath), "Library", "ScriptAssemblies");
 
@@ -520,6 +518,27 @@ public class ImmerzaSceneBundler : EditorWindow
         {
             args += $"/reference:{path} ";
         }
+
+        string unityAssemblyPath = Path.Combine("..", "Managed", "UnityEngine");
+
+        args += $"/reference:{Path.Combine(unityAssemblyPath, "UnityEngine.CoreModule.dll")} ";
+        args += $"/reference:{Path.Combine(unityAssemblyPath, "UnityEngine.AIModule.dll")} ";
+        args += $"/reference:{Path.Combine(unityAssemblyPath, "UnityEngine.AnimationModule.dll")} ";
+        args += $"/reference:{Path.Combine(unityAssemblyPath, "UnityEngine.ARModule.dll")} ";
+        args += $"/reference:{Path.Combine(unityAssemblyPath, "UnityEngine.AudioModule.dll")} ";
+        args += $"/reference:{Path.Combine(unityAssemblyPath, "UnityEngine.HierarchyCoreModule.dll")} ";
+        args += $"/reference:{Path.Combine(unityAssemblyPath, "UnityEngine.ImageConversionModule.dll")} ";
+        args += $"/reference:{Path.Combine(unityAssemblyPath, "UnityEngine.InputForUIModule.dll")} ";
+        args += $"/reference:{Path.Combine(unityAssemblyPath, "UnityEngine.InputModule.dll")} ";
+        args += $"/reference:{Path.Combine(unityAssemblyPath, "UnityEngine.ParticleSystemModule.dll")} ";
+        args += $"/reference:{Path.Combine(unityAssemblyPath, "UnityEngine.PhysicsModule.dll")} ";
+        args += $"/reference:{Path.Combine(unityAssemblyPath, "UnityEngine.SpriteMaskModule.dll")} ";
+        args += $"/reference:{Path.Combine(unityAssemblyPath, "UnityEngine.SpriteShapeModule.dll")} ";
+        args += $"/reference:{Path.Combine(unityAssemblyPath, "UnityEngine.UIModule.dll")} ";
+        args += $"/reference:{Path.Combine(unityAssemblyPath, "UnityEngine.VFXModule.dll")} ";
+        args += $"/reference:{Path.Combine(unityAssemblyPath, "UnityEngine.VideoModule.dll")} ";
+        args += $"/reference:{Path.Combine(unityAssemblyPath, "UnityEngine.VRModule.dll")} ";
+        args += $"/reference:{Path.Combine(unityAssemblyPath, "UnityEngine.XRModule.dll")} ";
 
         args += @$"/out:""{Path.Combine(sceneCachePath, sceneToExport.name, sceneToExport.name + ".dll")}"" ";
         args += @$"""{Path.Combine(sceneCachePath, sceneToExport.name, "*.cs")}"" ";
@@ -556,6 +575,10 @@ public class ImmerzaSceneBundler : EditorWindow
                 if (args.Data.Contains("warning"))
                 {
                     Debug.LogWarning(args.Data);
+                }
+                else if (args.Data.Contains("error"))
+                {
+                    Debug.LogError(args.Data);
                 }
                 else
                 {
