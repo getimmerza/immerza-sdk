@@ -22,6 +22,9 @@ public class TestBehaviour : MonoBehaviour
     private Color testColor;
 
     [SerializeField]
+    private List<Color> testColorArray;
+
+    [SerializeField]
     private AnimationType chosenAnimationType;
 
     /*[SerializeField] private List<int> testListInt = new();
@@ -34,6 +37,8 @@ public class TestBehaviour : MonoBehaviour
 
     [SerializeField] private List<Material> testAssetReferences = new();
     [SerializeField] private List<GameObject> testGOReferences = new();
+
+    [SerializeField] private TestSO testSO;
 
     private void Start()
     {

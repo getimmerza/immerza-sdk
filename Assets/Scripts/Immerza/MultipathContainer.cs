@@ -2,14 +2,17 @@ using UnityEngine;
 using System.Collections.Generic;
 using UnityEngine.Splines;
 
-public class MultipathContainer : MonoBehaviour
+namespace ImmerzaSDK
 {
-    [SerializeField] private List<SplineContainer> paths;
-
-    public SplineContainer GetRandomPath()
+    public class MultipathContainer : MonoBehaviour
     {
-        int pathIndex = Random.Range(0, paths.Count);
+        [SerializeField] private List<SplineContainer> paths;
 
-        return paths[pathIndex];
+        public SplineContainer GetRandomPath()
+        {
+            int pathIndex = Random.Range(0, paths.Count);
+
+            return paths[pathIndex];
+        }
     }
 }
