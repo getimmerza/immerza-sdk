@@ -8,7 +8,7 @@ namespace ImmerzaSDK.Types
         [JsonProperty("asset_table")]
         public Dictionary<string, List<string>> assetTable = new Dictionary<string, List<string>>();
         [JsonProperty("component_table")]
-        public Dictionary<string, ComponentData> componentTable = new Dictionary<string, ComponentData>();
+        public Dictionary<string, List<ComponentData>> componentTable = new Dictionary<string, List<ComponentData>>();
 
         public void AddAsset(string label, string assetPath)
         {
@@ -26,7 +26,13 @@ namespace ImmerzaSDK.Types
                 className = className,
                 fields = values
             };
-            componentTable.Add(path, data);
+
+            if (!componentTable.ContainsKey(path))
+            {
+                componentTable.Add(path, new List<ComponentData>());
+            }
+
+            componentTable[path].Add(data);
         }
     }
 }

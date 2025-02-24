@@ -18,6 +18,7 @@ using System.Diagnostics;
 using Debug = UnityEngine.Debug;
 using System.Collections;
 using Newtonsoft.Json.Linq;
+using UnityEngine.XR.Interaction.Toolkit.Inputs.Readers;
 
 public class ImmerzaSceneBundler : EditorWindow
 {
@@ -217,11 +218,6 @@ public class ImmerzaSceneBundler : EditorWindow
         BuildPipeline.BuildAssetBundles(bundleDir, exportMap, BuildAssetBundleOptions.None, BuildTarget.Android);
 
         sceneMetadata.assetMetaData = assetMetadata;
-
-        foreach (string path in assetPaths)
-        {
-            Debug.Log(path);
-        }
 
         try
         {
@@ -465,6 +461,19 @@ public class ImmerzaSceneBundler : EditorWindow
 
                                     values.Add(field.Name, fieldValue);
                                 }
+                                else if(field.FieldType.IsGenericType && field.FieldType.GetGenericTypeDefinition() == typeof(XRInputValueReader<>))
+                                {
+                                    XRInputValueReader valReader = (XRInputValueReader)field.GetValue(script);
+
+                                    ValueField fieldValue = new ValueField()
+                                    {
+                                        value = AssetDatabase.GetAssetPath(valReader.inputActionReference.asset),
+                                        type = typeof(string),
+                                        serializationType = ImmerzaSDK.Types.ValueType.SingleAssetReference
+                                    };
+
+                                    values.Add(field.Name, fieldValue);
+                                }
                                 else
                                 {
                                     /* STRUCTS
@@ -562,6 +571,15 @@ public class ImmerzaSceneBundler : EditorWindow
             args += $"/reference:{path} ";
         }
 
+        if (IsRunningInPackage())
+        {
+            args += $"/reference:{Path.GetFullPath("Packages/com.actimi.immerzasdk/Runtime/ImmerzaSDK.dll")} ";
+        }
+        else
+        {
+            args += $"/reference:{Path.Combine(basePath, "ImmerzaSDK.dll")} ";
+        }
+
         string unityAssemblyPath = Path.Combine("..", "Managed", "UnityEngine");
 
         args += $"/reference:{Path.Combine(unityAssemblyPath, "UnityEngine.CoreModule.dll")} ";
@@ -633,7 +651,7 @@ public class ImmerzaSceneBundler : EditorWindow
         if (!compilerProcess.Start())
         {
             SetSuccessMsg(false, "Compiler has not been found!");
-            UnityEngine.Debug.LogError("Check if the path is correct: " + dotnetPath);
+            Debug.LogError("Check if the path is correct: " + dotnetPath);
             return CompilationState.FAILED;
         }
 

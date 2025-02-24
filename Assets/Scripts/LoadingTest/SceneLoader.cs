@@ -135,11 +135,12 @@ public class SceneLoader : MonoBehaviour
         }
 
 
-        Dictionary<string, ComponentData> componentData = sceneData.assetMetaData.componentTable;
+        Dictionary<string, List<ComponentData>> componentData = sceneData.assetMetaData.componentTable;
 
         List<CLRInstance> proxyList = new();
         List<GameObject> proxyGoList = new();
 
+        /*
         foreach (KeyValuePair<string, ComponentData> data in componentData)
         {
             string goPath = data.Key;
@@ -161,17 +162,19 @@ public class SceneLoader : MonoBehaviour
             proxyList.Add(instance);
             proxyGoList.Add(curGameObject);
         }
+        */
 
         for (int i = 0; i < proxyList.Count; i++)
         {
             CLRInstance prox = proxyList[i];
             string pathToGameObject = GetGameObjectPath(proxyGoList[i]);
 
-            Dictionary<string, ValueField> fields = componentData[pathToGameObject].fields;
+            Dictionary<string, ValueField> fields = componentData[pathToGameObject][0].fields;
             List<CLRField> clrFieldList = prox.GetCLRInterpretedType().GetInstanceFields(); // this is bad, need to ask developer, how to directly access fields
             clrFieldList.Reverse();
             int clrFieldIndex = 0;
 
+            /*
             foreach (KeyValuePair<string, ValueField> field in fields)
             {
                 Debug.Log(clrFieldList[clrFieldIndex].Name);
@@ -204,7 +207,9 @@ public class SceneLoader : MonoBehaviour
 
                 clrFieldIndex++;
             }
+            */
         }
+            
     }
 
     private static string GetGameObjectPath(GameObject obj)

@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.XR.Interaction.Toolkit.Inputs.Readers;
 
 
 public class TestBehaviour : MonoBehaviour
@@ -26,6 +27,11 @@ public class TestBehaviour : MonoBehaviour
 
     [SerializeField]
     private AnimationType chosenAnimationType;
+
+    [SerializeField]
+    private XRInputValueReader<float> xrInputReader;
+
+    
 
     /*[SerializeField] private List<int> testListInt = new();
 
