@@ -11,12 +11,14 @@ using SharpCompress.Common;
 using System;
 using System.Reflection;
 using Newtonsoft.Json;
+using ImmerzaSDK;
 using ImmerzaSDK.Types;
 using ImmerzaSDK.Util;
 using System.Diagnostics;
 using Debug = UnityEngine.Debug;
 using System.Collections;
 using Newtonsoft.Json.Linq;
+using UnityEngine.XR.Interaction.Toolkit.Inputs.Readers;
 
 public class ImmerzaSceneBundler : EditorWindow
 {
@@ -172,7 +174,7 @@ public class ImmerzaSceneBundler : EditorWindow
 
         if (compilationState != CompilationState.NO_FILES)
         {
-            GatherAndSerialize(ref assetPaths, ref assetMetadata, newScenePath, originalScenePath);
+            GatherAndSerialize(assetPaths, assetMetadata, newScenePath, originalScenePath);
         }
 
         EditorSceneManager.SaveScene(activeScene);
@@ -279,7 +281,7 @@ public class ImmerzaSceneBundler : EditorWindow
         return AssetDatabase.IsValidFolder("Packages/com.actimi.immerzasdk");
     }
 
-    private void GatherAndSerialize(ref List<string> assetPaths, ref AssetMetadata assetMetadata, string newScenePath, string originalScenePath)
+    private void GatherAndSerialize(List<string> assetPaths, AssetMetadata assetMetadata, string newScenePath, string originalScenePath)
     {
         string[] scriptGUIDs = AssetDatabase.FindAssets("t:MonoScript", new[] { scriptsPath.text });
         HashSet<string> validClassNames = new();
@@ -305,7 +307,7 @@ public class ImmerzaSceneBundler : EditorWindow
         AppDomain.CurrentDomain.AssemblyResolve += (sender, args) =>
         {
             Console.WriteLine($"Skipping unresolved reference: {args.Name}");
-            return null; // Returning null allows the main assembly to still load
+            return null;
         };
 
         Assembly compiledAssembly = Assembly.LoadFrom(Path.Combine(sceneCachePath, sceneToExport.name, sceneToExport.name + ".dll"));
@@ -338,7 +340,7 @@ public class ImmerzaSceneBundler : EditorWindow
                                 {
                                     ValueField fieldValue = new ValueField()
                                     {
-                                        value = JsonConvert.SerializeObject(field.GetValue(script), Formatting.Indented, new JsonSerializerSettings { ReferenceLoopHandling = ReferenceLoopHandling.Error }),
+                                        value = JsonConvert.SerializeObject(field.GetValue(script), Formatting.Indented, new JsonSerializerSettings { ReferenceLoopHandling = ReferenceLoopHandling.Ignore }),
                                         type = field.FieldType,
                                         serializationType = ImmerzaSDK.Types.ValueType.ArrayValue
                                     };
@@ -395,7 +397,7 @@ public class ImmerzaSceneBundler : EditorWindow
                                         }
                                     }
 
-                                    fieldValue.value = JsonConvert.SerializeObject(storedReferences, Formatting.Indented, new JsonSerializerSettings { ReferenceLoopHandling = ReferenceLoopHandling.Error });
+                                    fieldValue.value = JsonConvert.SerializeObject(storedReferences, Formatting.Indented, new JsonSerializerSettings { ReferenceLoopHandling = ReferenceLoopHandling.Ignore });
                                     fieldValue.type = typeof(List<string>);
 
                                     values.Add(field.Name, fieldValue);
@@ -408,6 +410,23 @@ public class ImmerzaSceneBundler : EditorWindow
                                         type = field.FieldType,
                                         serializationType = ImmerzaSDK.Types.ValueType.SingleReference
                                     };
+
+                                    UnityEngine.Object fieldObj = (UnityEngine.Object)field.GetValue(script);
+
+                                    if (AssetDatabase.Contains(fieldObj)) // Single Assets
+                                    {
+                                        if (fieldObj.GetType().IsSubclassOf(typeof(ScriptableObject)))
+                                        {
+                                            fieldValue.type = compiledAssembly.GetType(field.FieldType.FullName);
+                                        }
+
+                                        string assetPath = AssetDatabase.GetAssetPath(fieldObj);
+                                        fieldValue.value = assetPath;
+                                        fieldValue.serializationType = ImmerzaSDK.Types.ValueType.SingleAssetReference;
+                                        values.Add(field.Name, fieldValue);
+                                        assetPaths.Add(assetPath);
+                                        continue;
+                                    }
 
                                     UnityEngine.Object fieldData = (UnityEngine.Object)field.GetValue(script);
 
@@ -441,6 +460,39 @@ public class ImmerzaSceneBundler : EditorWindow
                                     };
 
                                     values.Add(field.Name, fieldValue);
+                                }
+                                else if(field.FieldType.IsGenericType && field.FieldType.GetGenericTypeDefinition() == typeof(XRInputValueReader<>))
+                                {
+                                    XRInputValueReader valReader = (XRInputValueReader)field.GetValue(script);
+
+                                    ValueField fieldValue = new ValueField()
+                                    {
+                                        value = AssetDatabase.GetAssetPath(valReader.inputActionReference.asset),
+                                        type = typeof(string),
+                                        serializationType = ImmerzaSDK.Types.ValueType.SingleAssetReference
+                                    };
+
+                                    values.Add(field.Name, fieldValue);
+                                }
+                                else
+                                {
+                                    /* STRUCTS
+                                    ValueField fieldValue = new ValueField()
+                                    {
+                                        value = JsonConvert.SerializeObject(field.GetValue(script), Formatting.Indented, settings),
+                                        type = field.FieldType,
+                                        serializationType = ImmerzaSDK.Types.ValueType.SingleValue
+                                    };
+
+                                    Type customType = compiledAssembly.GetType(field.FieldType.FullName);
+
+                                    if (customType != null)
+                                    {
+                                        fieldValue.type = customType;
+                                    }
+
+                                    values.Add(field.Name, fieldValue);
+                                    */
                                 }
                             }
                         }
@@ -519,6 +571,15 @@ public class ImmerzaSceneBundler : EditorWindow
             args += $"/reference:{path} ";
         }
 
+        if (IsRunningInPackage())
+        {
+            args += $"/reference:{Path.GetFullPath("Packages/com.actimi.immerzasdk/Runtime/ImmerzaSDK.dll")} ";
+        }
+        else
+        {
+            args += $"/reference:{Path.Combine(basePath, "ImmerzaSDK.dll")} ";
+        }
+
         string unityAssemblyPath = Path.Combine("..", "Managed", "UnityEngine");
 
         args += $"/reference:{Path.Combine(unityAssemblyPath, "UnityEngine.CoreModule.dll")} ";
@@ -590,7 +651,7 @@ public class ImmerzaSceneBundler : EditorWindow
         if (!compilerProcess.Start())
         {
             SetSuccessMsg(false, "Compiler has not been found!");
-            UnityEngine.Debug.LogError("Check if the path is correct: " + dotnetPath);
+            Debug.LogError("Check if the path is correct: " + dotnetPath);
             return CompilationState.FAILED;
         }
 

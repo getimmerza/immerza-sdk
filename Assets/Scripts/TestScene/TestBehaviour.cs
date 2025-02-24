@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.XR.Interaction.Toolkit.Inputs.Readers;
 
 
 public class TestBehaviour : MonoBehaviour
@@ -22,7 +23,15 @@ public class TestBehaviour : MonoBehaviour
     private Color testColor;
 
     [SerializeField]
+    private List<Color> testColorArray;
+
+    [SerializeField]
     private AnimationType chosenAnimationType;
+
+    [SerializeField]
+    private XRInputValueReader<float> xrInputReader;
+
+    
 
     /*[SerializeField] private List<int> testListInt = new();
 
@@ -34,6 +43,8 @@ public class TestBehaviour : MonoBehaviour
 
     [SerializeField] private List<Material> testAssetReferences = new();
     [SerializeField] private List<GameObject> testGOReferences = new();
+
+    [SerializeField] private TestSO testSO;
 
     private void Start()
     {

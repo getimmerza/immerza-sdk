@@ -1,15 +1,19 @@
 using UnityEngine;
 
-public class BackgroundAudio : MonoBehaviour
+namespace ImmerzaSDK
 {
-    [SerializeField] private AudioSource backgroundAudioSrc;
-
-    private void Start()
+    public class BackgroundAudio : MonoBehaviour
     {
-        if (!backgroundAudioSrc.isPlaying)
+        [SerializeField] private AudioSource backgroundAudioSrc;
+
+        private void Start()
         {
-            backgroundAudioSrc.loop = true;
-            backgroundAudioSrc.Play();
+            if (!backgroundAudioSrc.isPlaying)
+            {
+                backgroundAudioSrc.loop = true;
+                backgroundAudioSrc.Play();
+            }
         }
     }
+
 }
