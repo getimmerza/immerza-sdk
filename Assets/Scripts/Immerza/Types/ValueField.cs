@@ -12,7 +12,9 @@ namespace ImmerzaSDK.Types
         ArrayReference,
         SingleAssetReference,
         ArrayAssetReference,
-        UnityEvent
+        UnityEvent,
+        SingleStruct,
+        ArrayOfStructs,
     }
 
     public class ValueField
