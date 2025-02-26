@@ -31,7 +31,7 @@ public class TestBehaviour : MonoBehaviour
     [SerializeField]
     private XRInputValueReader<float> xrInputReader;
 
-    
+
 
     /*[SerializeField] private List<int> testListInt = new();
 
@@ -41,8 +41,14 @@ public class TestBehaviour : MonoBehaviour
     [SerializeField] private List<Light> testListReferences = new();
     [SerializeField] private MeshRenderer[] testArrayReferences;*/
 
+    [SerializeField] private List<string> testStringArray = new();
+
     [SerializeField] private List<Material> testAssetReferences = new();
-    [SerializeField] private List<GameObject> testGOReferences = new();
+    [SerializeField] private List<GameObject> testPrefabReferences = new();
+
+    [SerializeField] private GameObject[] testGOReferences;
+
+    [SerializeField] private Light[] testLightReferences;
 
     [SerializeField] private TestSO testSO;
 
