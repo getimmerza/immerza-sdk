@@ -1,4 +1,4 @@
-//#define BUILD_BUNDLE
+#define BUILD_BUNDLE
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
@@ -24,6 +24,9 @@ using ImmerzaSDK.Serialize;
 
 public class ImmerzaSceneBundler : EditorWindow
 {
+    private const string BuildTargetWindows = "Windows";
+    private const string BuildTargetAndroid = "Android";
+
     private VisualTreeAsset treeAsset = null;
     private SceneAsset sceneToExport = null;
 
@@ -34,6 +37,7 @@ public class ImmerzaSceneBundler : EditorWindow
     private Button refreshBtn = null;
     private Label successLabel = null;
     private Toggle openExportFolderTgl = null;
+    private DropdownField buildTargetCmb = null;
 
     //string unityAssembliesPath = Path.Combine(EditorApplication.applicationContentsPath, "Managed");
     //string generalAssembliesPath = Path.Combine(EditorApplication.applicationContentsPath, "UnityReferenceAssemblies", "unity-4.8-api");
@@ -97,6 +101,16 @@ public class ImmerzaSceneBundler : EditorWindow
         successLabel.visible = false;
 
         openExportFolderTgl = root.Q<Toggle>("OpenExportFolder");
+
+        buildTargetCmb = root.Q<DropdownField>("BuildTarget");
+        buildTargetCmb.choices.Add(BuildTargetAndroid);
+        string defaultBuildTarget = BuildTargetAndroid;
+        if (!IsRunningInPackage())
+        {
+            buildTargetCmb.choices.Add(BuildTargetWindows);
+            defaultBuildTarget = BuildTargetWindows;
+        }
+        buildTargetCmb.value = defaultBuildTarget;
 
         UpdateSceneList();
 
@@ -221,7 +235,13 @@ public class ImmerzaSceneBundler : EditorWindow
         exportMap[1].assetBundleName = "immerza_assets";
         exportMap[1].assetNames = assetPaths.ToArray();
 
-        BuildPipeline.BuildAssetBundles(bundleDir, exportMap, BuildAssetBundleOptions.None, BuildTarget.Android);
+        BuildTarget buildTarget = buildTargetCmb.value switch
+        {
+            BuildTargetWindows => BuildTarget.StandaloneWindows,
+            _ => BuildTarget.Android
+        };
+
+        BuildPipeline.BuildAssetBundles(bundleDir, exportMap, BuildAssetBundleOptions.None, buildTarget);
 #endif
         sceneMetadata.assetMetaData = assetMetadata;
 
@@ -379,7 +399,7 @@ public class ImmerzaSceneBundler : EditorWindow
                             }
                             else
                             {
-                                Debug.LogError($"Found field that should be serialized but is not supported yet: {field.Name}, {field.FieldType}");
+                                Debug.LogError($"Found field that should be serialized but is not supported yet: '{field.FieldType}::{field.Name}'");
                             }
                         }
                     }
@@ -625,7 +645,7 @@ public class ImmerzaSceneBundler : EditorWindow
 
         if (converter == null)
         {
-            Debug.LogError("Trying to deserialize struct data without converter.. This is not supported");
+            Debug.LogError($"Trying to serialize struct type '{fieldType.Name}'. For this struct no converter was found...");
             return null;
         }
 
