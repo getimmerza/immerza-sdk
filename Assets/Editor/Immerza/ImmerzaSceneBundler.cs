@@ -1,4 +1,4 @@
-#define BUILD_BUNDLE
+//#define BUILD_BUNDLE
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
@@ -20,6 +20,7 @@ using Debug = UnityEngine.Debug;
 using System.Collections;
 using Newtonsoft.Json.Linq;
 using UnityEngine.XR.Interaction.Toolkit.Inputs.Readers;
+using ImmerzaSDK.Serialize;
 
 public class ImmerzaSceneBundler : EditorWindow
 {
@@ -369,7 +370,7 @@ public class ImmerzaSceneBundler : EditorWindow
                             }
                             else
                             {
-                                valueField = SerializeFieldStruct();
+                                valueField = SerializeFieldStruct(script, field);
                             }
 
                             if (valueField != null && valueField.serializationType != ImmerzaSDK.Types.ValueType.None)
@@ -607,26 +608,35 @@ public class ImmerzaSceneBundler : EditorWindow
         return valueField;
     }
 
-    private static ValueField SerializeFieldStruct()
+    private ValueField SerializeFieldStruct(MonoBehaviour script, FieldInfo field)
     {
-        return new ValueField();
-        /* STRUCTS
-        ValueField fieldValue = new ValueField()
-        {
-            value = JsonConvert.SerializeObject(field.GetValue(script), Formatting.Indented, settings),
-            type = field.FieldType,
-            serializationType = ImmerzaSDK.Types.ValueType.SingleValue
-        };
+        Type fieldType = field.FieldType;
 
-        Type customType = compiledAssembly.GetType(field.FieldType.FullName);
+        ImmerzaSDK.Types.ValueType serializationType = ImmerzaSDK.Types.ValueType.SingleStruct;
 
-        if (customType != null)
+        if (fieldType.IsGenericType && (fieldType.GetGenericTypeDefinition() == typeof(List<>) || fieldType.GetGenericTypeDefinition() == typeof(IList<>)))
         {
-            fieldValue.type = customType;
+            serializationType = ImmerzaSDK.Types.ValueType.ArrayOfStructs;
+            if (fieldType.IsGenericType)
+                fieldType = fieldType.GetGenericArguments()[0];
         }
 
-        values.Add(field.Name, fieldValue);
-        */
+        JsonConverter converter = JsonSettings.Settings.Converters.Where(converter => converter.CanConvert(fieldType)).FirstOrDefault();
+
+        if (converter == null)
+        {
+            Debug.LogError("Trying to deserialize struct data without converter.. This is not supported");
+            return null;
+        }
+
+        ValueField valueField = new ValueField
+        {
+            value = JsonConvert.SerializeObject(field.GetValue(script), JsonSettings.Settings),
+            type = field.FieldType,
+            serializationType = serializationType
+        };
+
+        return valueField;
     }
 
     private CompilationState CompileAssembly()
