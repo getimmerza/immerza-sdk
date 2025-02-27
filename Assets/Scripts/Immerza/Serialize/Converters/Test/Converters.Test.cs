@@ -1,5 +1,6 @@
 ﻿#define TEST_SUPPORT
-#if TEST_SUPPORT
+
+#if TEST_SUPPORT && UNITY_EDITOR_WIN
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
