@@ -1,11 +1,8 @@
 using Newtonsoft.Json;
-using NUnit.Framework;
-using PlasticGui.WorkspaceWindow.PendingChanges;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
-using Unity.Collections.LowLevel.Unsafe;
 using UnityEngine;
 
 namespace ImmerzaSDK.Serialize
@@ -64,9 +61,9 @@ namespace ImmerzaSDK.Serialize
                     {
                         reader.Read();
                         if (memberInfo is FieldInfo fieldInfo)
-                            fieldInfo.SetValue(value, ConvertType(fieldInfo.GetType(), reader.Value));
+                            fieldInfo.SetValue(value, ConvertType(fieldInfo.FieldType, reader.Value));
                         else if (memberInfo is PropertyInfo propertyInfo)
-                            propertyInfo.SetValue(value, ConvertType(propertyInfo.GetType(), reader.Value));
+                            propertyInfo.SetValue(value, ConvertType(propertyInfo.PropertyType, reader.Value));
                     }
                 }
 
@@ -100,18 +97,13 @@ namespace ImmerzaSDK.Serialize
                 throw new JsonSerializationException();
         }
 
-        private static object ConvertType(Type fieldType, object value)
+        private static object ConvertType(Type targetType, object value)
         {
-            if (fieldType == typeof(Single))
-            {
-                if (value.GetType() == typeof(Double))
-                    return Convert.ToSingle(value);
-            }
-
-            return value;
+            return Convert.ChangeType(value, targetType);
         }
     }
 
+    #region Converters Math
     public class ConverterColor : GenericStructConverter<Color> {public ConverterColor(): base("r", "g", "b", "a") { }}
     public class ConverterColor32 : GenericStructConverter<Color32> { public ConverterColor32() : base("r", "g", "b", "a") { }}
     public class ConverterVector2 : GenericStructConverter<Vector2> { public ConverterVector2() : base("x", "y") { }}
@@ -121,6 +113,7 @@ namespace ImmerzaSDK.Serialize
     public class ConverterVector4 : GenericStructConverter<Vector4> { public ConverterVector4() : base("x", "y", "z", "w") { } }
     public class ConverterQuaternion : GenericStructConverter<Quaternion> { public ConverterQuaternion() : base("x", "y", "z", "w") { } }
     public class ConverterMatrix4x4 : GenericStructConverter<Matrix4x4> { public ConverterMatrix4x4() : base("m00", "m10", "m20", "m30", "m01", "m11", "m21", "m31", "m02", "m12", "m22", "m23", "m03", "m13", "m23", "m33") { } }
+    #endregion
 
     public static class JsonSettings
     {
