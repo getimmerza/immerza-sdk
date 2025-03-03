@@ -3,8 +3,12 @@
   <assembly preserve="all" fullname="UnityEngine.CoreModule"> </assembly>
   <assembly preserve="all" fullname="mscorlib"> </assembly>
   <assembly preserve="all" fullname="netstandard"> </assembly>
+  <assembly preserve="all" fullname="System.Runtime.CompilerServices.Unsafe"> </assembly>
+  <assembly preserve="all" fullname="UnityEngine.XR"> </assembly>
+  <assembly preserve="all" fullname="Unity.XR.Interaction"> </assembly>
   <assembly fullname="UnityEngine">
     <type preserve="all" fullname="UnityEngine.Avatar"/>
+    <type preserve="all" fullname="UnityEngine.AnimationModule"/>
     <type preserve="all" fullname="UnityEngine.Animator"/>
     <type preserve="all" fullname="UnityEngine.SkinnedMeshRenderer"/>
     <type preserve="all" fullname="UnityEngine.MeshFilter"/>
@@ -14,7 +18,8 @@
     <type preserve="all" fullname="UnityEngine.AudioListener"/>
     <type preserve="all" fullname="UnityEngine.Mesh"/>
     <type preserve="all" fullname="UnityEngine.Input"/>
-    <type preserve="all" fullname="UnityEngine.UI.Canvas"/>
-    <type preserve="all" fullname="UnityEngine.UI.CanvasRenderer"/>
+    <type preserve="all" fullname="UnityEngine.UI"/>
+    <type preserve="all" fullname="UnityEngine.Networking"/>
+    <type preserve="all" fullname="UnityEngine.Splines"/>
   </assembly>
 </linker>

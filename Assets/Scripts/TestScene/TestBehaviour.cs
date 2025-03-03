@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.InputSystem;
 using UnityEngine.XR.Interaction.Toolkit.Inputs.Readers;
 
 
@@ -29,9 +30,9 @@ public class TestBehaviour : MonoBehaviour
     private AnimationType chosenAnimationType;
 
     [SerializeField]
-    private XRInputValueReader<float> xrInputReader;
+    private InputActionAsset xrInputAsset;
 
-
+    private InputAction activateValueAction;
 
     /*[SerializeField] private List<int> testListInt = new();
 
@@ -48,6 +49,8 @@ public class TestBehaviour : MonoBehaviour
 
     [SerializeField] private GameObject[] testGOReferences;
 
+    [SerializeField] private GameObject testGOReference;
+
     [SerializeField] private Light[] testLightReferences;
 
     [SerializeField] private TestSO testSO;
@@ -56,7 +59,24 @@ public class TestBehaviour : MonoBehaviour
     {
         Debug.Log(stringTest);
 
-        //testListInt.Add(1);
+        foreach (GameObject go in testGOReferences)
+        {
+            Instantiate(go);
+        }
+
+        Instantiate(testGOReference);
+
+        if (!xrInputAsset.enabled)
+        {
+            xrInputAsset.Enable();
+        }
+
+        activateValueAction = xrInputAsset.FindActionMap("XRI Left Interaction").FindAction("Activate Value");
+    }
+
+    private void OnDisable()
+    {
+        xrInputAsset.Disable();
     }
 
     // Update is called once per frame
@@ -68,6 +88,16 @@ public class TestBehaviour : MonoBehaviour
         movingCube.transform.SetPositionAndRotation(new Vector3(testPosition.position.x + x, testPosition.position.y + y, testPosition.position.z), Quaternion.Euler(x * 360.0f, 0.0f, y * 360.0f));
 
         movingLight.intensity = baseIntensity * Mathf.Abs(x);
+
+        if (activateValueAction != null)
+        {
+            float currentGripValue = activateValueAction.ReadValue<float>();
+            Debug.Log(currentGripValue);
+        }
+        else
+        {
+            Debug.LogWarning("Input Action is null!");
+        }
     }
 
     public enum AnimationType

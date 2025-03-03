@@ -172,9 +172,11 @@ public class ImmerzaSceneBundler : EditorWindow
 
         Scene activeScene = EditorSceneManager.OpenScene(newScenePath);
 
+        List<string> tempAssets = new();
+
         if (compilationState != CompilationState.NO_FILES)
         {
-            GatherAndSerialize(assetPaths, assetMetadata, newScenePath, originalScenePath);
+            GatherAndSerialize(assetPaths, assetMetadata, newScenePath, originalScenePath, tempAssets);
         }
 
         EditorSceneManager.SaveScene(activeScene);
@@ -260,6 +262,11 @@ public class ImmerzaSceneBundler : EditorWindow
 
             File.Delete(Path.Combine(bundleDir, "immerza_scene"));
             File.Delete(Path.Combine(bundleDir, "immerza_assets"));
+
+            foreach (string path in tempAssets)
+            {
+                AssetDatabase.DeleteAsset(path);
+            }
         }
         catch (Exception exc)
         {
@@ -281,7 +288,7 @@ public class ImmerzaSceneBundler : EditorWindow
         return AssetDatabase.IsValidFolder("Packages/com.actimi.immerzasdk");
     }
 
-    private void GatherAndSerialize(List<string> assetPaths, AssetMetadata assetMetadata, string newScenePath, string originalScenePath)
+    private void GatherAndSerialize(List<string> assetPaths, AssetMetadata assetMetadata, string newScenePath, string originalScenePath, List<string> tempAssets)
     {
         string[] scriptGUIDs = AssetDatabase.FindAssets("t:MonoScript", new[] { scriptsPath.text });
         HashSet<string> validClassNames = new();
@@ -374,12 +381,18 @@ public class ImmerzaSceneBundler : EditorWindow
                                         {
                                             if (@object.scene.name == null)
                                             {
-                                                string assetPath = AssetDatabase.GetAssetPath(fieldData);
+                                                string assetPath = AssetDatabase.GetAssetPath(fieldData).Replace(".prefab", "_Export.prefab");
 
-                                                GameObject newPrefab = PrefabUtility.SaveAsPrefabAsset((GameObject)fieldData, assetPath.Replace(".prefab", "_Export.prefab"));
-                                                GameObject newPrefabInstance = (GameObject)PrefabUtility.InstantiatePrefab(newPrefab);
+                                                GameObject newPrefab = PrefabUtility.SaveAsPrefabAsset((GameObject)fieldData, assetPath);
 
                                                 (AssetMetadata, List<MonoBehaviour>) serializedPrefab = PrefabSerialize(newPrefab, validClassNames, assetPaths, compiledAssembly);
+
+                                                serializedPrefab.Item1.assetTable = new Dictionary<string, List<string>>
+                                                {
+                                                    { "prefab", new List<string> { assetPath } }
+                                                };
+
+                                                GameObject newPrefabInstance = (GameObject)PrefabUtility.InstantiatePrefab(newPrefab);
 
                                                 foreach (MonoBehaviour prefabScript in serializedPrefab.Item2)
                                                 {
@@ -389,6 +402,8 @@ public class ImmerzaSceneBundler : EditorWindow
                                                 assetPaths.Add(assetPath);
                                                 storedReferences.Add(JsonConvert.SerializeObject(serializedPrefab.Item1, Formatting.None));
                                                 fieldValue.serializationType = ImmerzaSDK.Types.ValueType.ArrayAssetReference;
+
+                                                tempAssets.Add(assetPath);
 
                                                 DestroyImmediate(newPrefabInstance);
                                             }
@@ -430,7 +445,7 @@ public class ImmerzaSceneBundler : EditorWindow
 
                                     UnityEngine.Object fieldObj = (UnityEngine.Object)field.GetValue(script);
 
-                                    if (AssetDatabase.Contains(fieldObj)) // Single Assets
+                                    if (AssetDatabase.Contains(fieldObj))
                                     {
                                         if (fieldObj.GetType().IsSubclassOf(typeof(ScriptableObject)))
                                         {
@@ -440,6 +455,34 @@ public class ImmerzaSceneBundler : EditorWindow
                                         string assetPath = AssetDatabase.GetAssetPath(fieldObj);
                                         fieldValue.value = assetPath;
                                         fieldValue.serializationType = ImmerzaSDK.Types.ValueType.SingleAssetReference;
+
+                                        if (fieldObj is GameObject go && go.scene.name == null)
+                                        {
+                                            string newAssetPath = AssetDatabase.GetAssetPath(go).Replace(".prefab", "_Export.prefab");
+
+                                            GameObject newPrefab = PrefabUtility.SaveAsPrefabAsset(go, assetPath);
+
+                                            (AssetMetadata, List<MonoBehaviour>) serializedPrefab = PrefabSerialize(newPrefab, validClassNames, assetPaths, compiledAssembly);
+
+                                            serializedPrefab.Item1.assetTable = new Dictionary<string, List<string>>
+                                            {
+                                                    { "prefab", new List<string> { assetPath } }
+                                            };
+
+                                            GameObject newPrefabInstance = (GameObject)PrefabUtility.InstantiatePrefab(newPrefab);
+
+                                            foreach (MonoBehaviour prefabScript in serializedPrefab.Item2)
+                                            {
+                                                PrefabUtility.ApplyRemovedComponent(newPrefabInstance, prefabScript, InteractionMode.AutomatedAction);
+                                            }
+
+                                            tempAssets.Add(newAssetPath);
+
+                                            fieldValue.value = JsonConvert.SerializeObject(serializedPrefab.Item1, Formatting.None);
+
+                                            DestroyImmediate(newPrefabInstance);
+                                        }
+
                                         values.Add(field.Name, fieldValue);
                                         assetPaths.Add(assetPath);
                                         continue;
@@ -478,17 +521,20 @@ public class ImmerzaSceneBundler : EditorWindow
 
                                     values.Add(field.Name, fieldValue);
                                 }
-                                else if(field.FieldType.IsGenericType && field.FieldType.GetGenericTypeDefinition() == typeof(XRInputValueReader<>)) // workaround for XRInputValueReader
+                                else if(field.FieldType.IsGenericType && field.FieldType.GetGenericTypeDefinition() == typeof(XRInputValueReader<>)) // workaround for XRInputValueReader, needs Converter
                                 {
                                     XRInputValueReader valReader = (XRInputValueReader)field.GetValue(script);
 
+                                    string assetPath = AssetDatabase.GetAssetPath(valReader.inputActionReference.asset);
+
                                     ValueField fieldValue = new ValueField()
                                     {
-                                        value = AssetDatabase.GetAssetPath(valReader.inputActionReference.asset),
+                                        value = assetPath,
                                         type = typeof(string),
                                         serializationType = ImmerzaSDK.Types.ValueType.SingleAssetReference
                                     };
 
+                                    assetPaths.Add(assetPath);
                                     values.Add(field.Name, fieldValue);
                                 }
                                 else

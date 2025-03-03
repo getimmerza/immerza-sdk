@@ -101,6 +101,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   test: {fileID: 8919260426963538209}
+  testString: ARRAY
 --- !u!1 &8919260426963538209
 GameObject:
   m_ObjectHideFlags: 0
@@ -146,3 +147,4 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   test: {fileID: 5069318355562793473}
+  testString: ARRAY
