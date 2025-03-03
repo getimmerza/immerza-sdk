@@ -36,14 +36,28 @@ public class SceneLoader : MonoBehaviour
         DownloadScene();
     }
 
-    void DownloadScene()
+    private void DownloadScene()
     {
-        byte[] bundle = File.ReadAllBytes("C:\\Users\\traut\\Desktop\\immerza-sdk\\ImmerzaBundles\\immerza_data.bundle");
-        string metadata = File.ReadAllText("C:\\Users\\traut\\Desktop\\immerza-sdk\\ImmerzaBundles\\immerza_metadata.json");
+        string bundlePath = Path.Combine(Path.GetDirectoryName(Application.dataPath), "ImmerzaBundles");
+        if (Directory.Exists(bundlePath))
+        {
+            try
+            {
+                byte[] bundle = File.ReadAllBytes(Path.Combine(bundlePath, "immerza_data.bundle"));
+                ProcessBundleInMemory(bundle);
 
-        ProcessBundleInMemory(bundle);
-
-        OnBundleLoaded(metadata);
+                string metadata = File.ReadAllText(Path.Combine(bundlePath, "immerza_metadata.json"));
+                OnBundleLoaded(metadata);
+            }
+            catch (Exception ex)
+            {
+                Debug.LogException(ex);
+            }
+        }
+        else
+        {
+            Debug.LogError($"export path for bundle doesn't exist. make sure to export to '{bundlePath}'");
+        }
     }
 
 

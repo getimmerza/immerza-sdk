@@ -1,3 +1,4 @@
+#define BUILD_BUNDLE
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
@@ -19,9 +20,13 @@ using Debug = UnityEngine.Debug;
 using System.Collections;
 using Newtonsoft.Json.Linq;
 using UnityEngine.XR.Interaction.Toolkit.Inputs.Readers;
+using ImmerzaSDK.Serialize;
 
 public class ImmerzaSceneBundler : EditorWindow
 {
+    private const string BuildTargetWindows = "Windows";
+    private const string BuildTargetAndroid = "Android";
+
     private VisualTreeAsset treeAsset = null;
     private SceneAsset sceneToExport = null;
 
@@ -31,6 +36,8 @@ public class ImmerzaSceneBundler : EditorWindow
     private Button exportBtn = null;
     private Button refreshBtn = null;
     private Label successLabel = null;
+    private Toggle openExportFolderTgl = null;
+    private DropdownField buildTargetCmb = null;
 
     //string unityAssembliesPath = Path.Combine(EditorApplication.applicationContentsPath, "Managed");
     //string generalAssembliesPath = Path.Combine(EditorApplication.applicationContentsPath, "UnityReferenceAssemblies", "unity-4.8-api");
@@ -92,6 +99,18 @@ public class ImmerzaSceneBundler : EditorWindow
         refreshBtn = root.Q<Button>("RefreshButton");
         successLabel = root.Q<Label>("SuccessLabel");
         successLabel.visible = false;
+
+        openExportFolderTgl = root.Q<Toggle>("OpenExportFolder");
+
+        buildTargetCmb = root.Q<DropdownField>("BuildTarget");
+        buildTargetCmb.choices.Add(BuildTargetAndroid);
+        string defaultBuildTarget = BuildTargetAndroid;
+        if (!IsRunningInPackage())
+        {
+            buildTargetCmb.choices.Add(BuildTargetWindows);
+            defaultBuildTarget = BuildTargetWindows;
+        }
+        buildTargetCmb.value = defaultBuildTarget;
 
         UpdateSceneList();
 
@@ -209,6 +228,7 @@ public class ImmerzaSceneBundler : EditorWindow
             }
         }
 
+#if BUILD_BUNDLE
         AssetBundleBuild[] exportMap = new AssetBundleBuild[2];
 
         exportMap[0].assetBundleName = "immerza_scene";
@@ -217,8 +237,14 @@ public class ImmerzaSceneBundler : EditorWindow
         exportMap[1].assetBundleName = "immerza_assets";
         exportMap[1].assetNames = assetPaths.ToArray();
 
-        BuildPipeline.BuildAssetBundles(bundleDir, exportMap, BuildAssetBundleOptions.None, BuildTarget.Android);
+        BuildTarget buildTarget = buildTargetCmb.value switch
+        {
+            BuildTargetWindows => BuildTarget.StandaloneWindows,
+            _ => BuildTarget.Android
+        };
 
+        BuildPipeline.BuildAssetBundles(bundleDir, exportMap, BuildAssetBundleOptions.None, buildTarget);
+#endif
         sceneMetadata.assetMetaData = assetMetadata;
 
         try
@@ -237,6 +263,7 @@ public class ImmerzaSceneBundler : EditorWindow
                 File.Delete(archivePath);
             }
 
+#if BUILD_BUNDLE
             using (Stream stream = File.OpenWrite(archivePath))
             using (IWriter writer = WriterFactory.Open(stream, ArchiveType.Tar, SharpCompress.Common.CompressionType.GZip))
             {
@@ -253,20 +280,23 @@ public class ImmerzaSceneBundler : EditorWindow
 
             uint crc = 0xffffffff;
             crc = ImmerzaUtil.ComputeChecksum(combined);
-
+#else
+            uint crc = 0xdeadbeef;
+#endif
             sceneMetadata.hash = crc;
             sceneMetadata.sceneID = "0";
             sceneMetadata.sdkVersion = IsRunningInPackage() ? GetPackageVersion() : "dev";
             sceneMetadata.isUsingBgMusic = FindAnyObjectByType<BackgroundAudio>(FindObjectsInactive.Include) != null;
             sceneMetadata.SaveMetaData(Path.Combine(bundleDir, "immerza_metadata.json"));
 
+#if BUILD_BUNDLE
             File.Delete(Path.Combine(bundleDir, "immerza_scene"));
             File.Delete(Path.Combine(bundleDir, "immerza_assets"));
-
             foreach (string path in tempAssets)
             {
                 AssetDatabase.DeleteAsset(path);
             }
+#endif
         }
         catch (Exception exc)
         {
@@ -281,6 +311,11 @@ public class ImmerzaSceneBundler : EditorWindow
         AssetDatabase.DeleteAsset(newScenePath);
         AssetDatabase.DeleteAsset(assemblyAssetPath);
         SetSuccessMsg(true);
+
+        if (openExportFolderTgl.value)
+        {
+            Process.Start("explorer.exe", bundleDir);
+        }
     }
 
     private static bool IsRunningInPackage()
@@ -292,276 +327,90 @@ public class ImmerzaSceneBundler : EditorWindow
     {
         string[] scriptGUIDs = AssetDatabase.FindAssets("t:MonoScript", new[] { scriptsPath.text });
         HashSet<string> validClassNames = new();
-
         foreach (string scriptGUID in scriptGUIDs)
         {
             string scriptPath = AssetDatabase.GUIDToAssetPath(scriptGUID);
-
             MonoScript monoScript = AssetDatabase.LoadAssetAtPath<MonoScript>(scriptPath);
             if (monoScript != null)
             {
                 Type type = monoScript.GetClass();
-                if (type != null)
+                if (type != null && type.IsSubclassOf(typeof(MonoBehaviour)))
                 {
-                    if (type.IsSubclassOf(typeof(MonoBehaviour)))
-                    {
-                        validClassNames.Add(type.Name);
-                    }
+                    validClassNames.Add(type.Name);
                 }
             }
         }
 
-        AppDomain.CurrentDomain.AssemblyResolve += (sender, args) =>
-        {
-            Console.WriteLine($"Skipping unresolved reference: {args.Name}");
-            return null;
-        };
-
-        Assembly compiledAssembly = Assembly.LoadFrom(Path.Combine(sceneCachePath, sceneToExport.name, sceneToExport.name + ".dll"));
+        Assembly compiledAssembly = LoadCompiledAssembly(Path.Combine(sceneCachePath, sceneToExport.name, sceneToExport.name + ".dll"));
 
         try
         {
             List<MonoBehaviour> customScripts = new();
+
             foreach (GameObject obj in SceneManager.GetActiveScene().GetRootGameObjects())
             {
-                MonoBehaviour[] scripts = obj.GetComponentsInChildren<MonoBehaviour>(true);
-
-                foreach (MonoBehaviour script in scripts)
+                foreach (MonoBehaviour script in obj.GetComponentsInChildren<MonoBehaviour>(true))
                 {
-                    if (script == null)
-                    {
-                        // Show Error
-                    }
-
                     Type classType = script.GetType();
 
-                    if (validClassNames.Contains(classType.Name))
+                    // we skip all attached scripts that are not 'custom' for the exported scene
+                    if (!validClassNames.Contains(classType.Name))
                     {
-                        customScripts.Add(script);
-                        FieldInfo[] fields = classType.GetFields(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
-                        Dictionary<string, ValueField> values = new Dictionary<string, ValueField>();
+                        continue;
+                    }
 
-                        foreach (FieldInfo field in fields)
+                    customScripts.Add(script);
+
+                    Debug.Log($"{classType.Name} {obj.name}");
+
+                    Dictionary<string, ValueField> values = new Dictionary<string, ValueField>();
+                    FieldInfo[] fields = classType.GetFields(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
+                    foreach (FieldInfo field in fields)
+                    {
+                        bool hasSerializeFieldAttribute = field.GetCustomAttribute(typeof(SerializeField)) != null;
+
+                        // same reasoning as Unity inspector exposed fields
+                        if (field.IsPublic || hasSerializeFieldAttribute)
                         {
-                            bool isPublic = field.IsPublic;
-                            bool isSerializedPrivate = field.GetCustomAttribute(typeof(SerializeField)) != null;
+                            ValueField valueField = null;
 
-                            if (isPublic || isSerializedPrivate)
+                            if (ImmerzaUtil.IsFieldAPrimitiveList(field.FieldType) || ImmerzaUtil.IsFieldAPrimitiveArray(field.FieldType))
                             {
-                                if (ImmerzaUtil.IsFieldAPrimitiveList(field.FieldType) || ImmerzaUtil.IsFieldAPrimitiveArray(field.FieldType))
-                                {
-                                    ValueField fieldValue = new ValueField()
-                                    {
-                                        value = JsonConvert.SerializeObject(field.GetValue(script), Formatting.Indented, new JsonSerializerSettings { ReferenceLoopHandling = ReferenceLoopHandling.Ignore }),
-                                        type = field.FieldType,
-                                        serializationType = ImmerzaSDK.Types.ValueType.ArrayValue
-                                    };
+                                valueField = SerializeFieldPrimitiveList(script, field);
+                            }
+                            else if (ImmerzaUtil.IsFieldAReferenceList(field.FieldType) || ImmerzaUtil.IsFieldAReferenceArray(field.FieldType))
+                            {
+                                valueField = SerializeFieldReferenceList(script, field, assetPaths, compiledAssembly, customScripts);
+                            }
+                            else if (field.FieldType.IsClass && field.FieldType != typeof(string) && field.FieldType.IsSubclassOf(typeof(UnityEngine.Object)))
+                            {
+                                valueField = SerializeFieldReference(script, field, assetPaths, compiledAssembly, customScripts);
+                            }
+                            else if (field.FieldType.IsPrimitive || field.FieldType == typeof(string))
+                            {
+                                valueField = SerializeFieldPrimitive(script, field);
+                            }
+                            else if(field.FieldType.IsGenericType && field.FieldType.GetGenericTypeDefinition() == typeof(XRInputValueReader<>))
+                            {
+                                valueField = SerializeFieldGeneric(script, field);
+                            }
+                            else
+                            {
+                                valueField = SerializeFieldStruct(script, field);
+                            }
 
-                                    values.Add(field.Name, fieldValue);
-                                }
-                                else if (ImmerzaUtil.IsFieldAReferenceList(field.FieldType) || ImmerzaUtil.IsFieldAReferenceArray(field.FieldType))
-                                {
-                                    List<string> storedReferences = new();
-                                    IEnumerable crtReferences = (IEnumerable)field.GetValue(script);
-
-                                    ValueField fieldValue = new();
-
-                                    if (!crtReferences.GetEnumerator().MoveNext())
-                                    {
-                                        continue;
-                                    }
-
-                                    foreach (object reference in crtReferences)
-                                    {
-                                        UnityEngine.Object fieldData = (UnityEngine.Object)reference;
-
-                                        GameObject fieldGameObject = null;
-
-                                        if (fieldData is GameObject @object)
-                                        {
-                                            if (@object.scene.name == null)
-                                            {
-                                                string assetPath = AssetDatabase.GetAssetPath(fieldData).Replace(".prefab", "_Export.prefab");
-
-                                                GameObject newPrefab = PrefabUtility.SaveAsPrefabAsset((GameObject)fieldData, assetPath);
-
-                                                (AssetMetadata, List<MonoBehaviour>) serializedPrefab = PrefabSerialize(newPrefab, validClassNames, assetPaths, compiledAssembly);
-
-                                                serializedPrefab.Item1.assetTable = new Dictionary<string, List<string>>
-                                                {
-                                                    { "prefab", new List<string> { assetPath } }
-                                                };
-
-                                                GameObject newPrefabInstance = (GameObject)PrefabUtility.InstantiatePrefab(newPrefab);
-
-                                                foreach (MonoBehaviour prefabScript in serializedPrefab.Item2)
-                                                {
-                                                    PrefabUtility.ApplyRemovedComponent(newPrefabInstance, prefabScript, InteractionMode.AutomatedAction);
-                                                }
-
-                                                assetPaths.Add(assetPath);
-                                                storedReferences.Add(JsonConvert.SerializeObject(serializedPrefab.Item1, Formatting.None));
-                                                fieldValue.serializationType = ImmerzaSDK.Types.ValueType.ArrayAssetReference;
-
-                                                tempAssets.Add(assetPath);
-
-                                                DestroyImmediate(newPrefabInstance);
-                                            }
-                                            else
-                                            {
-                                                fieldGameObject = @object;
-                                                storedReferences.Add(ImmerzaUtil.GetHierarchyPath(fieldGameObject));
-                                                fieldValue.serializationType = ImmerzaSDK.Types.ValueType.ArrayReference;
-                                            }
-                                        }
-                                        else if (fieldData is UnityEngine.Component component)
-                                        {
-                                            fieldGameObject = component.gameObject;
-                                            storedReferences.Add(ImmerzaUtil.GetHierarchyPath(fieldGameObject));
-                                            fieldValue.serializationType = ImmerzaSDK.Types.ValueType.ArrayReference;
-                                        }
-                                        else
-                                        {
-                                            string assetPath = AssetDatabase.GetAssetPath(fieldData);
-                                            assetPaths.Add(assetPath);
-                                            storedReferences.Add(assetPath);
-                                            fieldValue.serializationType = ImmerzaSDK.Types.ValueType.ArrayAssetReference;
-                                        }
-                                    }
-
-                                    fieldValue.value = JsonConvert.SerializeObject(storedReferences, Formatting.Indented, new JsonSerializerSettings { ReferenceLoopHandling = ReferenceLoopHandling.Ignore });
-                                    fieldValue.type = typeof(List<string>);
-
-                                    values.Add(field.Name, fieldValue);
-                                }
-                                else if (field.FieldType.IsClass && field.FieldType != typeof(string) && field.FieldType.IsSubclassOf(typeof(UnityEngine.Object)))
-                                {
-                                    ValueField fieldValue = new ValueField()
-                                    {
-                                        value = "",
-                                        type = field.FieldType,
-                                        serializationType = ImmerzaSDK.Types.ValueType.SingleReference
-                                    };
-
-                                    UnityEngine.Object fieldObj = (UnityEngine.Object)field.GetValue(script);
-
-                                    if (AssetDatabase.Contains(fieldObj))
-                                    {
-                                        if (fieldObj.GetType().IsSubclassOf(typeof(ScriptableObject)))
-                                        {
-                                            fieldValue.type = compiledAssembly.GetType(field.FieldType.FullName);
-                                        }
-
-                                        string assetPath = AssetDatabase.GetAssetPath(fieldObj);
-                                        fieldValue.value = assetPath;
-                                        fieldValue.serializationType = ImmerzaSDK.Types.ValueType.SingleAssetReference;
-
-                                        if (fieldObj is GameObject go && go.scene.name == null)
-                                        {
-                                            string newAssetPath = AssetDatabase.GetAssetPath(go).Replace(".prefab", "_Export.prefab");
-
-                                            GameObject newPrefab = PrefabUtility.SaveAsPrefabAsset(go, assetPath);
-
-                                            (AssetMetadata, List<MonoBehaviour>) serializedPrefab = PrefabSerialize(newPrefab, validClassNames, assetPaths, compiledAssembly);
-
-                                            serializedPrefab.Item1.assetTable = new Dictionary<string, List<string>>
-                                            {
-                                                    { "prefab", new List<string> { assetPath } }
-                                            };
-
-                                            GameObject newPrefabInstance = (GameObject)PrefabUtility.InstantiatePrefab(newPrefab);
-
-                                            foreach (MonoBehaviour prefabScript in serializedPrefab.Item2)
-                                            {
-                                                PrefabUtility.ApplyRemovedComponent(newPrefabInstance, prefabScript, InteractionMode.AutomatedAction);
-                                            }
-
-                                            tempAssets.Add(newAssetPath);
-
-                                            fieldValue.value = JsonConvert.SerializeObject(serializedPrefab.Item1, Formatting.None);
-
-                                            DestroyImmediate(newPrefabInstance);
-                                        }
-
-                                        values.Add(field.Name, fieldValue);
-                                        assetPaths.Add(assetPath);
-                                        continue;
-                                    }
-
-                                    UnityEngine.Object fieldData = (UnityEngine.Object)field.GetValue(script);
-
-                                    GameObject fieldGameObject = null;
-
-                                    if (fieldData is GameObject @object)
-                                    {
-                                        fieldGameObject = @object;
-                                    }
-                                    else if (fieldData is UnityEngine.Component component)
-                                    {
-                                        fieldGameObject = component.gameObject;
-
-                                        if (customScripts.FirstOrDefault(val => val.GetType() == field.FieldType) != null)
-                                        {
-                                            fieldValue.type = compiledAssembly.GetType(field.FieldType.FullName);
-                                        }
-                                    }
-
-                                    fieldValue.value = ImmerzaUtil.GetHierarchyPath(fieldGameObject);
-
-                                    values.Add(field.Name, fieldValue);
-                                }
-                                else if (field.FieldType.IsPrimitive || field.FieldType == typeof(string))
-                                {
-                                    ValueField fieldValue = new ValueField()
-                                    {
-                                        value = JsonConvert.SerializeObject(field.GetValue(script), Formatting.Indented, new JsonSerializerSettings { ReferenceLoopHandling = ReferenceLoopHandling.Error }),
-                                        type = field.FieldType,
-                                        serializationType = ImmerzaSDK.Types.ValueType.SingleValue
-                                    };
-
-                                    values.Add(field.Name, fieldValue);
-                                }
-                                else if(field.FieldType.IsGenericType && field.FieldType.GetGenericTypeDefinition() == typeof(XRInputValueReader<>)) // workaround for XRInputValueReader, needs Converter
-                                {
-                                    XRInputValueReader valReader = (XRInputValueReader)field.GetValue(script);
-
-                                    string assetPath = AssetDatabase.GetAssetPath(valReader.inputActionReference.asset);
-
-                                    ValueField fieldValue = new ValueField()
-                                    {
-                                        value = assetPath,
-                                        type = typeof(string),
-                                        serializationType = ImmerzaSDK.Types.ValueType.SingleAssetReference
-                                    };
-
-                                    assetPaths.Add(assetPath);
-                                    values.Add(field.Name, fieldValue);
-                                }
-                                else
-                                {
-                                    /* STRUCTS
-                                    ValueField fieldValue = new ValueField()
-                                    {
-                                        value = JsonConvert.SerializeObject(field.GetValue(script), Formatting.Indented, settings),
-                                        type = field.FieldType,
-                                        serializationType = ImmerzaSDK.Types.ValueType.SingleValue
-                                    };
-
-                                    Type customType = compiledAssembly.GetType(field.FieldType.FullName);
-
-                                    if (customType != null)
-                                    {
-                                        fieldValue.type = customType;
-                                    }
-
-                                    values.Add(field.Name, fieldValue);
-                                    */
-                                }
+                            if (valueField != null && valueField.serializationType != ImmerzaSDK.Types.ValueType.None)
+                            {
+                                values.Add(field.Name, valueField);
+                            }
+                            else
+                            {
+                                Debug.LogError($"Found field that should be serialized but is not supported yet: '{field.FieldType}::{field.Name}'");
                             }
                         }
-
-                        assetMetadata.AddComponent(ImmerzaUtil.GetHierarchyPath(script.gameObject), classType.Name, values);
                     }
+
+                    assetMetadata.AddComponent(ImmerzaUtil.GetHierarchyPath(script.gameObject), classType.Name, values);
                 }
             }
 
@@ -577,8 +426,242 @@ public class ImmerzaSceneBundler : EditorWindow
             AssetDatabase.DeleteAsset(newScenePath);
             AssetDatabase.Refresh();
             SetSuccessMsg(false);
-            return;
         }
+    }
+
+    private static Assembly LoadCompiledAssembly(string pathToAsembly)
+    {
+        ResolveEventHandler resolveEventHandler = (sender, args) =>
+        {
+            Console.WriteLine($"Skipping unresolved reference: {args.Name}");
+            return null;
+        };
+
+        Assembly compiledAssembly = null;
+
+        try
+        {
+            AppDomain.CurrentDomain.AssemblyResolve += resolveEventHandler;
+
+            if (File.Exists(pathToAsembly))
+            {
+                compiledAssembly = Assembly.LoadFrom(pathToAsembly);
+            }
+        }
+        finally
+        {
+            AppDomain.CurrentDomain.AssemblyResolve -= resolveEventHandler;
+        }
+        
+        if (compiledAssembly == null)
+        {
+            Debug.LogWarning("Failed to load compiled assembly...");
+        }
+
+        return compiledAssembly;
+    }
+    
+    private static ValueField SerializeFieldGeneric(MonoBehaviour script, FieldInfo field)
+    {
+        XRInputValueReader valReader = (XRInputValueReader)field.GetValue(script);
+
+        ValueField valueField = new ValueField()
+        {
+            value = AssetDatabase.GetAssetPath(valReader.inputActionReference.asset),
+            type = typeof(string),
+            serializationType = ImmerzaSDK.Types.ValueType.SingleAssetReference
+        };
+
+        return valueField;
+    }
+
+    private static ValueField SerializeFieldPrimitive(MonoBehaviour script, FieldInfo field)
+    {
+        ValueField valueField = new ValueField
+        {
+            value = JsonConvert.SerializeObject(field.GetValue(script), Formatting.Indented, new JsonSerializerSettings 
+            { 
+                ReferenceLoopHandling = ReferenceLoopHandling.Error 
+            }),
+            type = field.FieldType,
+            serializationType = ImmerzaSDK.Types.ValueType.SingleValue
+        };
+
+        return valueField;
+    }
+
+    private static ValueField SerializeObjectReference(UnityEngine.Object referencedObject, List<string> assetPaths, Assembly compiledAssembly, List<MonoBehaviour> customScripts)
+    {
+        ValueField valueField = new ValueField
+        {
+            type = referencedObject.GetType(),
+        };
+        // the reference is a prefab asset from the database not a reference of a scene instantiated object
+        if (AssetDatabase.Contains(referencedObject))
+        {
+            if (referencedObject.GetType().IsSubclassOf(typeof(ScriptableObject)))
+            {
+                valueField.type = compiledAssembly.GetType(valueField.type.FullName);
+            }
+
+            valueField.value = AssetDatabase.GetAssetPath(referencedObject);
+            valueField.serializationType = ImmerzaSDK.Types.ValueType.SingleAssetReference;
+
+            // if we reference a prefab, it needs to be considered for bundle export
+            assetPaths.Add(valueField.value);
+        }
+        else
+        {
+            GameObject fieldGameObject = null;
+
+            if (referencedObject is GameObject @object)
+            {
+                fieldGameObject = @object;
+            }
+            else if (referencedObject is UnityEngine.Component component)
+            {
+                fieldGameObject = component.gameObject;
+                
+                if (customScripts.FirstOrDefault(script => script.GetType() == valueField.type) != null)
+                {
+                    valueField.type = compiledAssembly.GetType(valueField.type.FullName);
+                }
+            }
+
+            valueField.value = ImmerzaUtil.GetHierarchyPath(fieldGameObject);
+            valueField.serializationType = ImmerzaSDK.Types.ValueType.SingleReference;
+        }
+
+        return valueField;
+    }
+
+    private static ValueField SerializeFieldReference(MonoBehaviour script, FieldInfo field, List<string> assetPaths, Assembly compiledAssembly, List<MonoBehaviour> customScripts)
+    {
+        return SerializeObjectReference((UnityEngine.Object)field.GetValue(script), assetPaths, compiledAssembly, customScripts);
+    }
+
+    private static ValueField SerializeFieldReferenceList(MonoBehaviour script, FieldInfo field, List<string> assetPaths, Assembly compiledAssembly, List<MonoBehaviour> customScripts)
+    {
+        IEnumerable referenceContainer = (IEnumerable)field.GetValue(script);
+        if (!referenceContainer.GetEnumerator().MoveNext()) {
+            return null;
+        }
+
+        ImmerzaSDK.Types.ValueType serializationType = ImmerzaSDK.Types.ValueType.None;
+        List<string> storedReferences = new();
+        foreach (object referenceContainerItem in referenceContainer)
+        {
+            if (referenceContainerItem is GameObject gameObject && String.IsNullOrEmpty(gameObject.scene.name))
+            {
+                /*string assetPath = AssetDatabase.GetAssetPath(fieldData);
+
+                GameObject newPrefab = PrefabUtility.SaveAsPrefabAsset((GameObject)fieldData, assetPath.Replace(".prefab", "_Export.prefab"));
+                GameObject newPrefabInstance = (GameObject)PrefabUtility.InstantiatePrefab(newPrefab);
+
+
+                (AssetMetadata, List<MonoBehaviour>) serializedPrefab = PrefabSerialize(newPrefab, validClassNames, assetPaths, compiledAssembly);
+
+                //GameObject test = (GameObject)fieldData;
+
+
+                foreach (MonoBehaviour prefabScript in serializedPrefab.Item2)
+                {
+                    Debug.Log(newPrefabInstance.name + " : " + prefabScript.GetType().Name);
+                    PrefabUtility.ApplyRemovedComponent(newPrefabInstance, prefabScript, InteractionMode.AutomatedAction);
+                }
+
+
+                assetPaths.Add(assetPath);
+                storedReferences.Add(JsonConvert.SerializeObject(serializedPrefab.Item1));
+                fieldValue.serializationType = ImmerzaSDK.Types.ValueType.ArrayAssetReference;
+
+                DestroyImmediate(newPrefabInstance);*/
+            }
+            else
+            {
+                ValueField referenceValueField = SerializeObjectReference((UnityEngine.Object)referenceContainerItem, assetPaths, compiledAssembly, customScripts);
+                if (referenceValueField != null)
+                {
+                    if (serializationType == ImmerzaSDK.Types.ValueType.None)
+                    {
+                        serializationType = referenceValueField.serializationType;
+                    }
+
+                    if (serializationType == referenceValueField.serializationType)
+                    {
+                        storedReferences.Add(referenceValueField.value);
+                    }
+                    else
+                    {
+                        Debug.LogWarning("Reference array contains types of different serialization types which is not supported right now");
+                    }
+                }
+            }
+        }
+
+        ValueField valueField = new ValueField
+        {
+            value = JsonConvert.SerializeObject(storedReferences, Formatting.Indented, new JsonSerializerSettings
+            {
+                ReferenceLoopHandling = ReferenceLoopHandling.Ignore
+            }),
+            type = typeof(List<string>),
+            serializationType = serializationType switch
+            {
+                ImmerzaSDK.Types.ValueType.SingleReference => ImmerzaSDK.Types.ValueType.ArrayReference,
+                ImmerzaSDK.Types.ValueType.SingleAssetReference => ImmerzaSDK.Types.ValueType.ArrayAssetReference,
+                _ => ImmerzaSDK.Types.ValueType.None
+            }
+
+        };
+
+        return valueField;
+    }
+
+    private static ValueField SerializeFieldPrimitiveList(MonoBehaviour script, FieldInfo field)
+    {
+        ValueField valueField = new ValueField
+        {
+            value = JsonConvert.SerializeObject(field.GetValue(script), Formatting.Indented, new JsonSerializerSettings 
+            { 
+                ReferenceLoopHandling = ReferenceLoopHandling.Ignore 
+            }),
+            type = field.FieldType,
+            serializationType = ImmerzaSDK.Types.ValueType.ArrayValue
+        };
+
+        return valueField;
+    }
+
+    private ValueField SerializeFieldStruct(MonoBehaviour script, FieldInfo field)
+    {
+        Type fieldType = field.FieldType;
+
+        ImmerzaSDK.Types.ValueType serializationType = ImmerzaSDK.Types.ValueType.SingleStruct;
+
+        if (fieldType.IsGenericType && (fieldType.GetGenericTypeDefinition() == typeof(List<>) || fieldType.GetGenericTypeDefinition() == typeof(IList<>)))
+        {
+            serializationType = ImmerzaSDK.Types.ValueType.ArrayOfStructs;
+            if (fieldType.IsGenericType)
+                fieldType = fieldType.GetGenericArguments()[0];
+        }
+
+        JsonConverter converter = JsonSettings.Settings.Converters.Where(converter => converter.CanConvert(fieldType)).FirstOrDefault();
+
+        if (converter == null)
+        {
+            Debug.LogError($"Trying to serialize struct type '{fieldType.Name}'. For this struct no converter was found...");
+            return null;
+        }
+
+        ValueField valueField = new ValueField
+        {
+            value = JsonConvert.SerializeObject(field.GetValue(script), JsonSettings.Settings),
+            type = field.FieldType,
+            serializationType = serializationType
+        };
+
+        return valueField;
     }
 
     private CompilationState CompileAssembly()
