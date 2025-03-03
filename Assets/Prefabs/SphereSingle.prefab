@@ -11,9 +11,8 @@ GameObject:
   - component: {fileID: 2277732449594855407}
   - component: {fileID: 5159718353667353201}
   - component: {fileID: 2668823014180173597}
-  - component: {fileID: 5548950758847583187}
   m_Layer: 0
-  m_Name: Sphere
+  m_Name: SphereSingle
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -88,20 +87,6 @@ MeshRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 0
   m_AdditionalVertexStreams: {fileID: 0}
---- !u!114 &5548950758847583187
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5069318355562793473}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: daa8d1e6208ad4b4681f3f58fc36d031, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  test: {fileID: 8919260426963538209}
-  testString: ARRAY
 --- !u!1 &8919260426963538209
 GameObject:
   m_ObjectHideFlags: 0
@@ -111,7 +96,6 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 9067472921944144925}
-  - component: {fileID: 7115221299847957157}
   m_Layer: 0
   m_Name: TEST
   m_TagString: Untagged
@@ -134,17 +118,3 @@ Transform:
   m_Children: []
   m_Father: {fileID: 2277732449594855407}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &7115221299847957157
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8919260426963538209}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: daa8d1e6208ad4b4681f3f58fc36d031, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  test: {fileID: 5069318355562793473}
-  testString: ARRAY

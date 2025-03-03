@@ -191,9 +191,11 @@ public class ImmerzaSceneBundler : EditorWindow
 
         Scene activeScene = EditorSceneManager.OpenScene(newScenePath);
 
+        List<string> tempAssets = new();
+
         if (compilationState != CompilationState.NO_FILES)
         {
-            GatherAndSerialize(assetPaths, assetMetadata, newScenePath, originalScenePath);
+            GatherAndSerialize(assetPaths, assetMetadata, newScenePath, originalScenePath, tempAssets);
         }
 
         EditorSceneManager.SaveScene(activeScene);
@@ -290,6 +292,10 @@ public class ImmerzaSceneBundler : EditorWindow
 #if BUILD_BUNDLE
             File.Delete(Path.Combine(bundleDir, "immerza_scene"));
             File.Delete(Path.Combine(bundleDir, "immerza_assets"));
+            foreach (string path in tempAssets)
+            {
+                AssetDatabase.DeleteAsset(path);
+            }
 #endif
         }
         catch (Exception exc)
@@ -317,7 +323,7 @@ public class ImmerzaSceneBundler : EditorWindow
         return AssetDatabase.IsValidFolder("Packages/com.actimi.immerzasdk");
     }
 
-    private void GatherAndSerialize(List<string> assetPaths, AssetMetadata assetMetadata, string newScenePath, string originalScenePath)
+    private void GatherAndSerialize(List<string> assetPaths, AssetMetadata assetMetadata, string newScenePath, string originalScenePath, List<string> tempAssets)
     {
         string[] scriptGUIDs = AssetDatabase.FindAssets("t:MonoScript", new[] { scriptsPath.text });
         HashSet<string> validClassNames = new();
@@ -446,7 +452,7 @@ public class ImmerzaSceneBundler : EditorWindow
         {
             AppDomain.CurrentDomain.AssemblyResolve -= resolveEventHandler;
         }
-
+        
         if (compiledAssembly == null)
         {
             Debug.LogWarning("Failed to load compiled assembly...");
@@ -490,7 +496,6 @@ public class ImmerzaSceneBundler : EditorWindow
         {
             type = referencedObject.GetType(),
         };
-
         // the reference is a prefab asset from the database not a reference of a scene instantiated object
         if (AssetDatabase.Contains(referencedObject))
         {
@@ -516,7 +521,7 @@ public class ImmerzaSceneBundler : EditorWindow
             else if (referencedObject is UnityEngine.Component component)
             {
                 fieldGameObject = component.gameObject;
-
+                
                 if (customScripts.FirstOrDefault(script => script.GetType() == valueField.type) != null)
                 {
                     valueField.type = compiledAssembly.GetType(valueField.type.FullName);
@@ -553,10 +558,10 @@ public class ImmerzaSceneBundler : EditorWindow
                 GameObject newPrefab = PrefabUtility.SaveAsPrefabAsset((GameObject)fieldData, assetPath.Replace(".prefab", "_Export.prefab"));
                 GameObject newPrefabInstance = (GameObject)PrefabUtility.InstantiatePrefab(newPrefab);
 
+
                 (AssetMetadata, List<MonoBehaviour>) serializedPrefab = PrefabSerialize(newPrefab, validClassNames, assetPaths, compiledAssembly);
 
                 //GameObject test = (GameObject)fieldData;
-
 
 
                 foreach (MonoBehaviour prefabScript in serializedPrefab.Item2)
@@ -839,8 +844,6 @@ public class ImmerzaSceneBundler : EditorWindow
         List<MonoBehaviour> customScripts = new();
         MonoBehaviour[] scripts = root.GetComponentsInChildren<MonoBehaviour>(true);
 
-        Debug.LogError(root.name);
-
         foreach (MonoBehaviour script in scripts)
         {
             Type classType = script.GetType();
@@ -891,16 +894,16 @@ public class ImmerzaSceneBundler : EditorWindow
                                 {
                                     if (@object.scene.name == null)
                                     {
-                                        string assetPath = AssetDatabase.GetAssetPath(fieldData);
-                                        assetPaths.Add(assetPath);
-                                        storedReferences.Add(assetPath);
-                                        fieldValue.serializationType = ImmerzaSDK.Types.ValueType.ArrayAssetReference;
+                                        // Prefab in prefab handling
                                     }
                                     else
                                     {
+                                        /* this interferes currently, as the prefab needs to be instantiated before changing components 
+                                         * and therefore has a scene name, the assetPaths.Add(assetPath); are disabled for this reason
                                         fieldGameObject = @object;
                                         storedReferences.Add(ImmerzaUtil.GetHierarchyPath(fieldGameObject));
                                         fieldValue.serializationType = ImmerzaSDK.Types.ValueType.ArrayReference;
+                                        */
                                     }
                                 }
                                 else if (fieldData is UnityEngine.Component component)
@@ -913,8 +916,8 @@ public class ImmerzaSceneBundler : EditorWindow
                                 else
                                 {
                                     string assetPath = AssetDatabase.GetAssetPath(fieldData);
-                                    assetPaths.Add(assetPath);
-                                    storedReferences.Add(assetPath);
+                                    //assetPaths.Add(assetPath);
+                                    //storedReferences.Add(assetPath);
                                     fieldValue.serializationType = ImmerzaSDK.Types.ValueType.ArrayAssetReference;
                                 }
                             }
@@ -935,6 +938,7 @@ public class ImmerzaSceneBundler : EditorWindow
 
                             UnityEngine.Object fieldObj = (UnityEngine.Object)field.GetValue(script);
 
+                            /*
                             if (AssetDatabase.Contains(fieldObj)) // Single Assets
                             {
                                 if (fieldObj.GetType().IsSubclassOf(typeof(ScriptableObject)))
@@ -946,9 +950,9 @@ public class ImmerzaSceneBundler : EditorWindow
                                 fieldValue.value = assetPath;
                                 fieldValue.serializationType = ImmerzaSDK.Types.ValueType.SingleAssetReference;
                                 values.Add(field.Name, fieldValue);
-                                assetPaths.Add(assetPath);
+                                //assetPaths.Add(assetPath);
                                 continue;
-                            }
+                            }*/
 
                             UnityEngine.Object fieldData = (UnityEngine.Object)field.GetValue(script);
 
