@@ -70,8 +70,6 @@ public class TestBehaviour : MonoBehaviour
         {
             xrInputAsset.Enable();
         }
-
-        activateValueAction = xrInputAsset.FindActionMap("XRI Left Interaction").FindAction("Activate Value");
     }
 
     private void OnDisable()
@@ -89,9 +87,9 @@ public class TestBehaviour : MonoBehaviour
 
         movingLight.intensity = baseIntensity * Mathf.Abs(x);
 
-        if (activateValueAction != null)
+        if (xrInputAsset != null)
         {
-            float currentGripValue = activateValueAction.ReadValue<float>();
+            float currentGripValue = xrInputAsset.FindActionMap("XRI Left Interaction").FindAction("Activate Value").ReadValue<float>();
             Debug.Log(currentGripValue);
         }
         else

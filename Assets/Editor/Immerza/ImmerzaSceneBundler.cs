@@ -21,6 +21,7 @@ using System.Collections;
 using Newtonsoft.Json.Linq;
 using UnityEngine.XR.Interaction.Toolkit.Inputs.Readers;
 using ImmerzaSDK.Serialize;
+using System.Text.RegularExpressions;
 
 public class ImmerzaSceneBundler : EditorWindow
 {
@@ -325,23 +326,17 @@ public class ImmerzaSceneBundler : EditorWindow
 
     private void GatherAndSerialize(List<string> assetPaths, AssetMetadata assetMetadata, string newScenePath, string originalScenePath, List<string> tempAssets)
     {
-        string[] scriptGUIDs = AssetDatabase.FindAssets("t:MonoScript", new[] { scriptsPath.text });
-        HashSet<string> validClassNames = new();
-        foreach (string scriptGUID in scriptGUIDs)
-        {
-            string scriptPath = AssetDatabase.GUIDToAssetPath(scriptGUID);
-            MonoScript monoScript = AssetDatabase.LoadAssetAtPath<MonoScript>(scriptPath);
-            if (monoScript != null)
-            {
-                Type type = monoScript.GetClass();
-                if (type != null && type.IsSubclassOf(typeof(MonoBehaviour)))
-                {
-                    validClassNames.Add(type.Name);
-                }
-            }
-        }
-
         Assembly compiledAssembly = LoadCompiledAssembly(Path.Combine(sceneCachePath, sceneToExport.name, sceneToExport.name + ".dll"));
+
+        List<string> validClassNames = compiledAssembly.GetTypes()
+            .Where(t => t.IsClass && !t.IsAbstract && t.IsSubclassOf(typeof(MonoBehaviour)))
+            .Select(t => t.Name)
+            .ToList();
+
+        foreach (var test in validClassNames)
+        {
+            Debug.Log(test);
+        }
 
         try
         {
@@ -380,11 +375,11 @@ public class ImmerzaSceneBundler : EditorWindow
                             }
                             else if (ImmerzaUtil.IsFieldAReferenceList(field.FieldType) || ImmerzaUtil.IsFieldAReferenceArray(field.FieldType))
                             {
-                                valueField = SerializeFieldReferenceList(script, field, assetPaths, compiledAssembly, customScripts);
+                                valueField = SerializeFieldReferenceList(script, field, assetPaths, compiledAssembly, validClassNames, customScripts);
                             }
                             else if (field.FieldType.IsClass && field.FieldType != typeof(string) && field.FieldType.IsSubclassOf(typeof(UnityEngine.Object)))
                             {
-                                valueField = SerializeFieldReference(script, field, assetPaths, compiledAssembly, customScripts);
+                                valueField = SerializeFieldReference(script, field, assetPaths, compiledAssembly, validClassNames, customScripts);
                             }
                             else if (field.FieldType.IsPrimitive || field.FieldType == typeof(string))
                             {
@@ -490,7 +485,7 @@ public class ImmerzaSceneBundler : EditorWindow
         return valueField;
     }
 
-    private static ValueField SerializeObjectReference(UnityEngine.Object referencedObject, List<string> assetPaths, Assembly compiledAssembly, List<MonoBehaviour> customScripts)
+    private static ValueField SerializeObjectReference(UnityEngine.Object referencedObject, List<string> assetPaths, Assembly compiledAssembly, List<string> validClassNames, List<MonoBehaviour> customScripts)
     {
         ValueField valueField = new ValueField
         {
@@ -507,8 +502,30 @@ public class ImmerzaSceneBundler : EditorWindow
             valueField.value = AssetDatabase.GetAssetPath(referencedObject);
             valueField.serializationType = ImmerzaSDK.Types.ValueType.SingleAssetReference;
 
-            // if we reference a prefab, it needs to be considered for bundle export
-            assetPaths.Add(valueField.value);
+            if (referencedObject is GameObject gameObject && string.IsNullOrEmpty(gameObject.scene.name))
+            {
+                string assetPath = AssetDatabase.GetAssetPath(gameObject).Replace(".prefab", "_Export.prefab");
+
+                GameObject newPrefab = PrefabUtility.SaveAsPrefabAsset(gameObject, assetPath);
+                GameObject newPrefabInstance = (GameObject)PrefabUtility.InstantiatePrefab(newPrefab);
+
+                (AssetMetadata, List<MonoBehaviour>) serializedPrefab = PrefabSerialize(newPrefab, validClassNames, assetPaths, compiledAssembly);
+
+                foreach (MonoBehaviour prefabScript in serializedPrefab.Item2)
+                {
+                    PrefabUtility.ApplyRemovedComponent(newPrefabInstance, prefabScript, InteractionMode.AutomatedAction);
+                }
+
+                assetPaths.Add(assetPath);
+                valueField.value = JsonConvert.SerializeObject(serializedPrefab.Item1);
+
+                DestroyImmediate(newPrefabInstance);
+            }
+            else
+            {
+                // if we reference a prefab, it needs to be considered for bundle export
+                assetPaths.Add(valueField.value);
+            }
         }
         else
         {
@@ -535,15 +552,16 @@ public class ImmerzaSceneBundler : EditorWindow
         return valueField;
     }
 
-    private static ValueField SerializeFieldReference(MonoBehaviour script, FieldInfo field, List<string> assetPaths, Assembly compiledAssembly, List<MonoBehaviour> customScripts)
+    private static ValueField SerializeFieldReference(MonoBehaviour script, FieldInfo field, List<string> assetPaths, Assembly compiledAssembly, List<string> validClassNames, List<MonoBehaviour> customScripts)
     {
-        return SerializeObjectReference((UnityEngine.Object)field.GetValue(script), assetPaths, compiledAssembly, customScripts);
+        return SerializeObjectReference((UnityEngine.Object)field.GetValue(script), assetPaths, compiledAssembly, validClassNames, customScripts);
     }
 
-    private static ValueField SerializeFieldReferenceList(MonoBehaviour script, FieldInfo field, List<string> assetPaths, Assembly compiledAssembly, List<MonoBehaviour> customScripts)
+    private static ValueField SerializeFieldReferenceList(MonoBehaviour script, FieldInfo field, List<string> assetPaths, Assembly compiledAssembly, List<string> validClassNames, List<MonoBehaviour> customScripts)
     {
         IEnumerable referenceContainer = (IEnumerable)field.GetValue(script);
-        if (!referenceContainer.GetEnumerator().MoveNext()) {
+        if (!referenceContainer.GetEnumerator().MoveNext()) 
+        {
             return null;
         }
 
@@ -551,35 +569,29 @@ public class ImmerzaSceneBundler : EditorWindow
         List<string> storedReferences = new();
         foreach (object referenceContainerItem in referenceContainer)
         {
-            if (referenceContainerItem is GameObject gameObject && String.IsNullOrEmpty(gameObject.scene.name))
+            if (referenceContainerItem is GameObject gameObject && string.IsNullOrEmpty(gameObject.scene.name))
             {
-                /*string assetPath = AssetDatabase.GetAssetPath(fieldData);
+                string assetPath = AssetDatabase.GetAssetPath(gameObject).Replace(".prefab", "_Export.prefab");
 
-                GameObject newPrefab = PrefabUtility.SaveAsPrefabAsset((GameObject)fieldData, assetPath.Replace(".prefab", "_Export.prefab"));
+                GameObject newPrefab = PrefabUtility.SaveAsPrefabAsset(gameObject, assetPath);
                 GameObject newPrefabInstance = (GameObject)PrefabUtility.InstantiatePrefab(newPrefab);
-
 
                 (AssetMetadata, List<MonoBehaviour>) serializedPrefab = PrefabSerialize(newPrefab, validClassNames, assetPaths, compiledAssembly);
 
-                //GameObject test = (GameObject)fieldData;
-
-
                 foreach (MonoBehaviour prefabScript in serializedPrefab.Item2)
                 {
-                    Debug.Log(newPrefabInstance.name + " : " + prefabScript.GetType().Name);
                     PrefabUtility.ApplyRemovedComponent(newPrefabInstance, prefabScript, InteractionMode.AutomatedAction);
                 }
 
-
                 assetPaths.Add(assetPath);
                 storedReferences.Add(JsonConvert.SerializeObject(serializedPrefab.Item1));
-                fieldValue.serializationType = ImmerzaSDK.Types.ValueType.ArrayAssetReference;
+                serializationType = ImmerzaSDK.Types.ValueType.SingleAssetReference;
 
-                DestroyImmediate(newPrefabInstance);*/
+                DestroyImmediate(newPrefabInstance);
             }
             else
             {
-                ValueField referenceValueField = SerializeObjectReference((UnityEngine.Object)referenceContainerItem, assetPaths, compiledAssembly, customScripts);
+                ValueField referenceValueField = SerializeObjectReference((UnityEngine.Object)referenceContainerItem, assetPaths, compiledAssembly, validClassNames, customScripts);
                 if (referenceValueField != null)
                 {
                     if (serializationType == ImmerzaSDK.Types.ValueType.None)
@@ -599,7 +611,7 @@ public class ImmerzaSceneBundler : EditorWindow
             }
         }
 
-        ValueField valueField = new ValueField
+        ValueField valueField = new()
         {
             value = JsonConvert.SerializeObject(storedReferences, Formatting.Indented, new JsonSerializerSettings
             {
@@ -612,7 +624,6 @@ public class ImmerzaSceneBundler : EditorWindow
                 ImmerzaSDK.Types.ValueType.SingleAssetReference => ImmerzaSDK.Types.ValueType.ArrayAssetReference,
                 _ => ImmerzaSDK.Types.ValueType.None
             }
-
         };
 
         return valueField;
@@ -838,22 +849,23 @@ public class ImmerzaSceneBundler : EditorWindow
         SetSuccessMsg(success, null);
     }
 
-    private (AssetMetadata, List<MonoBehaviour>) PrefabSerialize(GameObject root, HashSet<string> validClassNames, List<string> assetPaths, Assembly compiledAssembly)
+    private static (AssetMetadata, List<MonoBehaviour>) PrefabSerialize(GameObject root, List<string> validClassNames, List<string> assetPaths, Assembly compiledAssembly)
     {
         AssetMetadata assetMetadata = new();
+        assetMetadata.assetTable.Add("prefab", new List<string>());
         List<MonoBehaviour> customScripts = new();
         MonoBehaviour[] scripts = root.GetComponentsInChildren<MonoBehaviour>(true);
 
         foreach (MonoBehaviour script in scripts)
         {
-            Type classType = script.GetType();
-
-            if (validClassNames.Contains(classType.Name))
+            if (validClassNames.Contains(script.GetType().Name))
             {
                 customScripts.Add(script);
+                Type classType = script.GetType();
                 FieldInfo[] fields = classType.GetFields(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
                 Dictionary<string, ValueField> values = new Dictionary<string, ValueField>();
 
+                
                 foreach (FieldInfo field in fields)
                 {
                     bool isPublic = field.IsPublic;
