@@ -6,5 +6,7 @@ namespace ImmerzaSDK
     {
         public static event Action<bool> OnPauseRequested; // true for pause, false for unpause
         public static event Action OnSceneStart;
+
+        public static event Action OnSceneEnd;
     }
 }
