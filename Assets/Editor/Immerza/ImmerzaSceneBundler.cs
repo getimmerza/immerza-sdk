@@ -346,6 +346,12 @@ public class ImmerzaSceneBundler : EditorWindow
             {
                 foreach (MonoBehaviour script in obj.GetComponentsInChildren<MonoBehaviour>(true))
                 {
+                    if (script == null)
+                    {
+                        Debug.LogError($"Script missing at Path: '{ImmerzaUtil.GetHierarchyPath(obj)}'");
+                        continue;
+                    }
+
                     Type classType = script.GetType();
 
                     // we skip all attached scripts that are not 'custom' for the exported scene
