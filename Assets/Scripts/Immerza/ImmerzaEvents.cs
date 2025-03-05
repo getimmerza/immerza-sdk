@@ -9,6 +9,15 @@ namespace ImmerzaSDK
 
         public static event Action OnSceneEnd;
 
+        public static void RequestPause(bool shouldPause)
+        {
+            OnPauseRequested?.Invoke(shouldPause);
+        }
+        public static void StartScene()
+        {
+            OnSceneStart?.Invoke();
+        }
+
         public static void EndScene()
         {
             OnSceneEnd?.Invoke();
