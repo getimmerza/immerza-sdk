@@ -62,6 +62,14 @@ namespace ImmerzaSDK.Util
             }
         }
 
+        public static void AddAssetPath(List<string> assetPaths, string path)
+        {
+            if (!assetPaths.Contains(path))
+            {
+                assetPaths.Add(path);
+            }
+        }
+
         public static void CopyDirectory(string sourcePath, string targetPath)
         {
             foreach (string dirPath in Directory.GetDirectories(sourcePath, "*", SearchOption.AllDirectories))

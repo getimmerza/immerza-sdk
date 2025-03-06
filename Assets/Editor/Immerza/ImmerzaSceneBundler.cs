@@ -105,13 +105,8 @@ public class ImmerzaSceneBundler : EditorWindow
 
         buildTargetCmb = root.Q<DropdownField>("BuildTarget");
         buildTargetCmb.choices.Add(BuildTargetAndroid);
-        string defaultBuildTarget = BuildTargetAndroid;
-        if (!IsRunningInPackage())
-        {
-            buildTargetCmb.choices.Add(BuildTargetWindows);
-            defaultBuildTarget = BuildTargetWindows;
-        }
-        buildTargetCmb.value = defaultBuildTarget;
+        buildTargetCmb.choices.Add(BuildTargetWindows);
+        buildTargetCmb.value = BuildTargetAndroid;
 
         UpdateSceneList();
 
@@ -212,19 +207,19 @@ public class ImmerzaSceneBundler : EditorWindow
             File.Copy(assemblyPath, assemblyAssetPath);
             AssetDatabase.ImportAsset(assemblyAssetPath);
             AssetDatabase.Refresh();
-            assetPaths.Add(assemblyAssetPath);
+            ImmerzaUtil.AddAssetPath(assetPaths, assemblyAssetPath);
             assetMetadata.AddAsset("ImmerzaAssembly", assemblyAssetPath);
         }
         else
         {
             if (IsRunningInPackage())
             {
-                assetPaths.Add("Packages/com.actimi.immerzasdk/Editor/Immerza/Assets/DummyFile.txt");
+                ImmerzaUtil.AddAssetPath(assetPaths, "Packages/com.actimi.immerzasdk/Editor/Immerza/Assets/DummyFile.txt");
                 assetMetadata.AddAsset("Gen", "NONE");
             }
             else
             {
-                assetPaths.Add("Assets/Editor/Immerza/Assets/DummyFile.txt");
+                ImmerzaUtil.AddAssetPath(assetPaths, "Assets/Editor/Immerza/Assets/DummyFile.txt");
                 assetMetadata.AddAsset("Gen", "NONE");
             }
         }
@@ -522,7 +517,7 @@ public class ImmerzaSceneBundler : EditorWindow
                     PrefabUtility.ApplyRemovedComponent(newPrefabInstance, prefabScript, InteractionMode.AutomatedAction);
                 }
 
-                assetPaths.Add(assetPath);
+                ImmerzaUtil.AddAssetPath(assetPaths, assetPath);
                 valueField.value = JsonConvert.SerializeObject(serializedPrefab.Item1);
 
                 DestroyImmediate(newPrefabInstance);
@@ -530,7 +525,7 @@ public class ImmerzaSceneBundler : EditorWindow
             else
             {
                 // if we reference a prefab, it needs to be considered for bundle export
-                assetPaths.Add(valueField.value);
+                ImmerzaUtil.AddAssetPath(assetPaths, valueField.value);
             }
         }
         else
@@ -589,7 +584,7 @@ public class ImmerzaSceneBundler : EditorWindow
                     PrefabUtility.ApplyRemovedComponent(newPrefabInstance, prefabScript, InteractionMode.AutomatedAction);
                 }
 
-                assetPaths.Add(assetPath);
+                ImmerzaUtil.AddAssetPath(assetPaths, assetPath);
                 storedReferences.Add(JsonConvert.SerializeObject(serializedPrefab.Item1));
                 serializationType = ImmerzaSDK.Types.ValueType.SingleAssetReference;
 

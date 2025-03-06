@@ -32,6 +32,9 @@ public class TestBehaviour : MonoBehaviour
     [SerializeField]
     private InputActionAsset xrInputAsset;
 
+    [SerializeField]
+    private InputActionAsset anotherxrInputAsset;
+
     private InputAction activateValueAction;
 
     /*[SerializeField] private List<int> testListInt = new();
