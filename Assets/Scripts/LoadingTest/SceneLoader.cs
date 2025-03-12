@@ -1,67 +1,84 @@
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.Networking;
-using System.Collections;
 using UnityEngine.SceneManagement;
 using System.IO;
 using System;
 using SharpCompress.Readers;
-using System.Linq;
 using ImmerzaSDK.Types;
-using dotnow.Reflection;
 using Newtonsoft.Json;
-using System.Reflection;
-using dotnow;
-using Mono.Cecil;
+using Newtonsoft.Json.Linq;
+using UnityEngine.Networking;
+using NUnit.Framework.Constraints;
+using System.Collections;
+using UnityEngine.XR.OpenXR;
 
 public class SceneLoader : MonoBehaviour
 {
-    private dotnow.AppDomain domain = null;
-
-    private IEnumerable<Type> types = null;
-
     private AssetBundle sceneBundle = null;
     private AssetBundle dataBundle = null;
 
     SceneMetadata sceneData = null;
     Dictionary<string, List<string>> assetTable = null;
 
-    private void Start()
+    public void LoadSceneAndCompileScriptsAsync()
     {
-        domain = new dotnow.AppDomain();
+        _ = DownloadSceneAsync();
     }
 
-    public void LoadSceneAndCompileScripts()
+    private async Awaitable DownloadSceneAsync()
     {
-        DownloadScene();
-    }
+        Debug.Log("Started");
 
-    private void DownloadScene()
-    {
-        string bundlePath = Path.Combine(Path.GetDirectoryName(Application.dataPath), "ImmerzaBundles");
-        if (Directory.Exists(bundlePath))
+        WWWForm formData = new();
+        formData.AddField("email", "defaultaccount@gmail.com");
+        formData.AddField("password", "defaultaccount123");
+        formData.AddField("clientId", "fc86ca24-e854-4c7f-bde1-fd5bb04d9a6d");
+
+        using UnityWebRequest req = UnityWebRequest.Post("https://api.ovok.com" + "/auth/login", formData);
+        await req.SendWebRequest();
+
+        if (req.result != UnityWebRequest.Result.Success)
         {
-            try
-            {
-                byte[] bundle = File.ReadAllBytes(Path.Combine(bundlePath, "immerza_data.bundle"));
-                ProcessBundleInMemory(bundle);
+            Debug.LogError("Login was not successful! Error: " + req.result);
+            return;
+        }
 
-                string metadata = File.ReadAllText(Path.Combine(bundlePath, "immerza_metadata.json"));
-                OnBundleLoaded(metadata);
-            }
-            catch (Exception ex)
-            {
-                Debug.LogException(ex);
-            }
-        }
-        else
+        JObject resObj = JObject.Parse(req.downloadHandler.text);
+
+        string accessToken = "Bearer " + (string)resObj["access_token"];
+
+        using UnityWebRequest metadataReq = UnityWebRequest.Get("https://api.ovok.com" + "/binary/" + "5cb50da5-ec97-41be-bdfc-7817ee44c851");
+        metadataReq.SetRequestHeader("Authorization", accessToken);
+        await metadataReq.SendWebRequest();
+        Debug.Log(metadataReq.downloadHandler.text);
+
+        if (metadataReq.result != UnityWebRequest.Result.Success)
         {
-            Debug.LogError($"export path for bundle doesn't exist. make sure to export to '{bundlePath}'");
+            Debug.LogError("Scene file not found: " + metadataReq.downloadHandler.text);
+            return;
         }
+
+        if (JObject.Parse(metadataReq.downloadHandler.text)["scene_id"] == null)
+        {
+            return;
+        }
+
+        using UnityWebRequest bundleReq = UnityWebRequest.Get("https://api.ovok.com" + "/binary/" + (string)JObject.Parse(metadataReq.downloadHandler.text)["scene_id"]);
+        bundleReq.SetRequestHeader("Authorization", accessToken);
+        await bundleReq.SendWebRequest();
+
+        if (bundleReq.result != UnityWebRequest.Result.Success)
+        {
+            Debug.LogError("Scene file not found: " + (string)JObject.Parse(metadataReq.downloadHandler.text)["scene_id"]);
+            return;
+        }
+
+        StartCoroutine(ProcessBundleInMemory(bundleReq.downloadHandler.data));
+        OnBundleLoaded(metadataReq.downloadHandler.text);
     }
 
 
-    private void ProcessBundleInMemory(byte[] bundleData)
+    private IEnumerator ProcessBundleInMemory(byte[] bundleData)
     {
         try
         {
@@ -89,6 +106,8 @@ public class SceneLoader : MonoBehaviour
         {
             Debug.LogError("Decompression failed: " + e.Message);
         }
+
+        yield return new WaitForSeconds(1.0f);
     }
 
     private void OnBundleLoaded(string jsonMetadata)
@@ -107,123 +126,7 @@ public class SceneLoader : MonoBehaviour
     private void SceneLoaded(UnityEngine.AsyncOperation obj)
     {
         obj.allowSceneActivation = true;
-        SceneLoadedTest();
-    }
-
-    private void SceneLoadedTest()
-    {
-        TextAsset playerAssembly = dataBundle.LoadAsset<TextAsset>(assetTable["ImmerzaAssembly"][0]);
-
-        if (playerAssembly == null)
-        {
-            Debug.LogError("No Assembly found!");
-        }
-
-        AssemblyDefinition assembly = AssemblyDefinition.ReadAssembly(new MemoryStream(playerAssembly.bytes));
-        var referencedNamespaces = assembly.MainModule.GetTypeReferences()
-                                             .Select(typeRef => typeRef.Namespace)
-                                             .Where(ns => !string.IsNullOrEmpty(ns))
-                                             .Distinct()
-                                             .OrderBy(ns => ns);
-
-        foreach (var ns in referencedNamespaces)
-        {
-            Debug.Log(ns);
-        }
-
-        foreach (var reference in assembly.MainModule.AssemblyReferences)
-        {
-            Debug.Log(reference.FullName);
-        }
-
-        foreach (var attribute in assembly.CustomAttributes)
-        {
-            Debug.Log($"Attribute: {attribute.AttributeType.FullName}");
-        }
-
-        CLRModule module = domain.LoadModuleStream(new MemoryStream(playerAssembly.bytes), false);
-
-        foreach (var attribute in module.GetTypes())
-        {
-            Debug.LogWarning(attribute.Name);
-        }
-
-
-        Dictionary<string, List<ComponentData>> componentData = sceneData.assetMetaData.componentTable;
-
-        List<CLRInstance> proxyList = new();
-        List<GameObject> proxyGoList = new();
-
-        /*
-        foreach (KeyValuePair<string, ComponentData> data in componentData)
-        {
-            string goPath = data.Key;
-            ComponentData compData = data.Value;
-
-            GameObject curGameObject = GameObject.Find(goPath);
-
-            if (curGameObject == null)
-            {
-                Debug.LogError("GameObject with path '" + goPath + "' not found");
-                return;
-            }
-
-            Type type = module.GetTypes()
-                .Where(t => t.Name == compData.className)
-                .FirstOrDefault();
-            
-            CLRInstance instance = (CLRInstance)OverrideBindings.AddComponentOverride(domain, null, curGameObject, new object[] { type });
-            proxyList.Add(instance);
-            proxyGoList.Add(curGameObject);
-        }
-        */
-
-        for (int i = 0; i < proxyList.Count; i++)
-        {
-            CLRInstance prox = proxyList[i];
-            string pathToGameObject = GetGameObjectPath(proxyGoList[i]);
-
-            Dictionary<string, ValueField> fields = componentData[pathToGameObject][0].fields;
-            List<CLRField> clrFieldList = prox.GetCLRInterpretedType().GetInstanceFields(); // this is bad, need to ask developer, how to directly access fields
-            clrFieldList.Reverse();
-            int clrFieldIndex = 0;
-
-            /*
-            foreach (KeyValuePair<string, ValueField> field in fields)
-            {
-                Debug.Log(clrFieldList[clrFieldIndex].Name);
-                if (field.Value.serializationType == ImmerzaSDK.Types.ValueType.SingleReference)
-                {
-                    if (field.Value.type == typeof(GameObject))
-                    {
-                        prox.SetFieldValue(clrFieldList[clrFieldIndex], GameObject.Find(field.Value.value));
-                    }
-                    else
-                    {
-                        prox.SetFieldValue(clrFieldList[clrFieldIndex], GameObject.Find(field.Value.value).GetComponent(field.Value.type));
-                    }
-                }
-                else if (field.Value.serializationType == ImmerzaSDK.Types.ValueType.SingleValue)
-                {
-                    prox.SetFieldValue(clrFieldList[clrFieldIndex], Convert.ChangeType(field.Value.value, field.Value.type));
-
-                }
-                else if (field.Value.serializationType == ImmerzaSDK.Types.ValueType.ArrayValue)
-                {
-                    Debug.Log("MULTIPLE VALUES");
-                }
-                else if (field.Value.serializationType == ImmerzaSDK.Types.ValueType.ArrayReference)
-                {
-
-                    Debug.Log(dataBundle.LoadAsset("Assets/Materials/ControllerGrey_Mat.mat", typeof(Material)));
-                    //prox.SetFieldValue(clrFieldList[clrFieldIndex], );
-                }
-
-                clrFieldIndex++;
-            }
-            */
-        }
-            
+        
     }
 
     private static string GetGameObjectPath(GameObject obj)

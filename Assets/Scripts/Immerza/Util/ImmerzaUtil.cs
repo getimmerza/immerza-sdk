@@ -1,14 +1,9 @@
-﻿using ImmerzaSDK.Types;
-using Newtonsoft.Json;
-using System;
+﻿using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
-using System.Reflection;
 using UnityEditor;
 using UnityEngine;
-using UnityEngine.XR.Interaction.Toolkit.Inputs.Readers;
 
 namespace ImmerzaSDK.Util
 {
@@ -122,6 +117,11 @@ namespace ImmerzaSDK.Util
         public static bool IsFieldAReferenceArray(Type type)
         {
             return type.IsArray && type.GetElementType().IsClass && type.GetElementType() != typeof(string) && type.GetElementType().IsSubclassOf(typeof(UnityEngine.Object));
+        }
+
+        public static bool IsRunningInPackage()
+        {
+            return AssetDatabase.IsValidFolder("Packages/com.actimi.immerzasdk");
         }
     }
 }
