@@ -12,6 +12,8 @@ using UnityEngine;
 using XLua;
 using System.Linq;
 using System.Reflection;
+using UnityEngine.Video;
+using UnityEngine.VFX;
 
 public static class GenConfig
 {
@@ -40,6 +42,14 @@ public static class GenConfig
                 typeof(MonoBehaviour),
                 typeof(ParticleSystem),
                 typeof(SkinnedMeshRenderer),
+                typeof(Mesh),
+                typeof(VisualEffect),
+                typeof(Collider),
+                typeof(MeshCollider),
+                typeof(Material),
+                typeof(VideoPlayer),
+                typeof(AudioClip),
+                typeof(AudioSource),
                 typeof(Renderer),
                 typeof(Light),
                 typeof(Mathf),

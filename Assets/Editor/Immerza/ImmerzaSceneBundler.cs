@@ -10,18 +10,12 @@ using UnityEditor.SceneManagement;
 using SharpCompress.Writers;
 using SharpCompress.Common;
 using System;
-using System.Reflection;
-using Newtonsoft.Json;
 using ImmerzaSDK;
 using ImmerzaSDK.Types;
 using ImmerzaSDK.Util;
 using System.Diagnostics;
 using Debug = UnityEngine.Debug;
-using System.Collections;
 using Newtonsoft.Json.Linq;
-using UnityEngine.XR.Interaction.Toolkit.Inputs.Readers;
-using ImmerzaSDK.Serialize;
-using System.Text.RegularExpressions;
 
 public class ImmerzaSceneBundler : EditorWindow
 {
@@ -62,7 +56,7 @@ public class ImmerzaSceneBundler : EditorWindow
     public void CreateGUI()
     {
         VisualElement root = rootVisualElement;
-        if (IsRunningInPackage())
+        if (ImmerzaUtil.IsRunningInPackage())
 		{
 			treeAsset = AssetDatabase.LoadAssetAtPath<VisualTreeAsset>("Packages/com.actimi.immerzasdk/Editor/Immerza/ImmerzaSceneBundlerUI.uxml");
 		}
@@ -73,7 +67,7 @@ public class ImmerzaSceneBundler : EditorWindow
 		root.Add(new Label());
 		Image immerzaLogo = new Image();
         immerzaLogo.scaleMode = ScaleMode.ScaleToFit;
-		if (IsRunningInPackage())
+		if (ImmerzaUtil.IsRunningInPackage())
 		{
             immerzaLogo.sprite = AssetDatabase.LoadAssetAtPath<Sprite>("Packages/com.actimi.immerzasdk/Editor/Immerza/Assets/ImmerzaLogo.png");
 		}
@@ -176,7 +170,7 @@ public class ImmerzaSceneBundler : EditorWindow
 
         assetMetadata.AddAsset("ImmerzaScene", scenePath);
 
-        if (IsRunningInPackage())
+        if (ImmerzaUtil.IsRunningInPackage())
         {
             ImmerzaUtil.AddAssetPath(assetPaths, "Packages/com.actimi.immerzasdk/Editor/Immerza/Assets/DummyFile.txt");
             assetMetadata.AddAsset("Gen", "NONE");
@@ -202,7 +196,7 @@ public class ImmerzaSceneBundler : EditorWindow
             _ => BuildTarget.Android
         };
 
-        BuildPipeline.BuildAssetBundles(bundleDir, exportMap, BuildAssetBundleOptions.None, buildTarget);
+        BuildPipeline.BuildAssetBundles(bundleDir, exportMap, BuildAssetBundleOptions.ForceRebuildAssetBundle, buildTarget);
 #endif
         sceneMetadata.assetMetaData = assetMetadata;
 
@@ -242,7 +236,7 @@ public class ImmerzaSceneBundler : EditorWindow
 #endif
             sceneMetadata.hash = crc;
             sceneMetadata.sceneID = "0";
-            sceneMetadata.sdkVersion = IsRunningInPackage() ? GetPackageVersion() : "dev";
+            sceneMetadata.sdkVersion = ImmerzaUtil.IsRunningInPackage() ? GetPackageVersion() : "dev";
             sceneMetadata.isUsingBgMusic = FindAnyObjectByType<BackgroundAudio>(FindObjectsInactive.Include) != null;
             sceneMetadata.SaveMetaData(Path.Combine(bundleDir, "immerza_metadata.json"));
 
@@ -264,159 +258,6 @@ public class ImmerzaSceneBundler : EditorWindow
         {
             Process.Start("explorer.exe", bundleDir);
         }
-    }
-
-    private static bool IsRunningInPackage()
-    {
-        return AssetDatabase.IsValidFolder("Packages/com.actimi.immerzasdk");
-    }
-
-    
-
-    private CompilationState CompileAssembly()
-    {
-        if (!Directory.Exists(Path.Combine(sceneCachePath, sceneToExport.name)))
-        {
-            Directory.CreateDirectory(Path.Combine(sceneCachePath, sceneToExport.name));
-        }
-
-        string scriptFolderPath = Path.Combine(Path.GetDirectoryName(Application.dataPath), scriptsPath.text);
-
-        if (!Directory.EnumerateFileSystemEntries(scriptFolderPath).Any())
-        {
-            Debug.Log("Script folder " + scriptsPath.text + " is empty!");
-            return CompilationState.NO_FILES;
-        }
-
-        ImmerzaUtil.CopyDirectory(
-            Path.Combine(Path.GetDirectoryName(Application.dataPath), scriptsPath.text), 
-            Path.Combine(sceneCachePath, sceneToExport.name)
-        );
-
-#if UNITY_EDITOR_OSX
-        string dotnetPath = Path.Combine(EditorApplication.applicationContentsPath, "NetCoreRuntime", "dotnet");
-        string cscPath = Path.Combine("..", "DotNetSdkRoslyn", "csc ");
-#endif
-#if UNITY_EDITOR_WIN
-        string dotnetPath = Path.Combine(EditorApplication.applicationContentsPath, "NetCoreRuntime", "dotnet.exe");
-        string cscPath = Path.Combine("..", "DotNetSdkRoslyn", "csc.dll ");
-#endif
-
-        string args = cscPath;
-
-        args += "/target:library ";
-
-        args += $"/reference:{Path.Combine(new string[] { "..", "NetStandard", "ref", "2.1.0", "netstandard.dll" })} ";
-
-        string basePath = Path.Combine(Path.GetDirectoryName(Application.dataPath), "Library", "ScriptAssemblies");
-
-        IEnumerable<string> paths = Directory.EnumerateFiles(basePath, "*.dll", SearchOption.AllDirectories)
-                        .Where(file =>
-                        {
-                            return file.Contains("Unity") && 
-                            !file.Contains("Editor") && 
-                            !file.Contains("VisualScripting") &&
-                            !file.Contains("RenderPipelines") &&
-                            !file.Contains("RenderPipeline") &&
-                            !file.Contains("Burst");
-                        });
-
-        foreach (string path in paths)
-        {
-            args += $"/reference:{path} ";
-        }
-
-        if (IsRunningInPackage())
-        {
-            args += $"/reference:{Path.GetFullPath("Packages/com.actimi.immerzasdk/Runtime/ImmerzaSDK.dll")} ";
-        }
-        else
-        {
-            args += $"/reference:{Path.Combine(basePath, "ImmerzaSDK.dll")} ";
-        }
-
-        string unityAssemblyPath = Path.Combine("..", "Managed", "UnityEngine");
-
-        args += $"/reference:{Path.Combine(unityAssemblyPath, "UnityEngine.CoreModule.dll")} ";
-        args += $"/reference:{Path.Combine(unityAssemblyPath, "UnityEngine.AIModule.dll")} ";
-        args += $"/reference:{Path.Combine(unityAssemblyPath, "UnityEngine.AnimationModule.dll")} ";
-        args += $"/reference:{Path.Combine(unityAssemblyPath, "UnityEngine.ARModule.dll")} ";
-        args += $"/reference:{Path.Combine(unityAssemblyPath, "UnityEngine.AudioModule.dll")} ";
-        args += $"/reference:{Path.Combine(unityAssemblyPath, "UnityEngine.HierarchyCoreModule.dll")} ";
-        args += $"/reference:{Path.Combine(unityAssemblyPath, "UnityEngine.ImageConversionModule.dll")} ";
-        args += $"/reference:{Path.Combine(unityAssemblyPath, "UnityEngine.InputForUIModule.dll")} ";
-        args += $"/reference:{Path.Combine(unityAssemblyPath, "UnityEngine.InputModule.dll")} ";
-        args += $"/reference:{Path.Combine(unityAssemblyPath, "UnityEngine.ParticleSystemModule.dll")} ";
-        args += $"/reference:{Path.Combine(unityAssemblyPath, "UnityEngine.PhysicsModule.dll")} ";
-        args += $"/reference:{Path.Combine(unityAssemblyPath, "UnityEngine.SpriteMaskModule.dll")} ";
-        args += $"/reference:{Path.Combine(unityAssemblyPath, "UnityEngine.SpriteShapeModule.dll")} ";
-        args += $"/reference:{Path.Combine(unityAssemblyPath, "UnityEngine.UIModule.dll")} ";
-        args += $"/reference:{Path.Combine(unityAssemblyPath, "UnityEngine.VFXModule.dll")} ";
-        args += $"/reference:{Path.Combine(unityAssemblyPath, "UnityEngine.VideoModule.dll")} ";
-        args += $"/reference:{Path.Combine(unityAssemblyPath, "UnityEngine.VRModule.dll")} ";
-        args += $"/reference:{Path.Combine(unityAssemblyPath, "UnityEngine.XRModule.dll")} ";
-
-        args += @$"/out:""{Path.Combine(sceneCachePath, sceneToExport.name, sceneToExport.name + ".dll")}"" ";
-        args += @$"""{Path.Combine(sceneCachePath, sceneToExport.name, "*.cs")}"" ";
-
-        System.Diagnostics.ProcessStartInfo processInfo = new()
-        {
-            CreateNoWindow = false,
-            UseShellExecute = false,
-            FileName = dotnetPath,
-            WindowStyle = System.Diagnostics.ProcessWindowStyle.Normal,
-            RedirectStandardError = true,
-            RedirectStandardOutput = true,
-            WorkingDirectory = dotnetPath.Split("dotnet")[0],
-
-            Arguments = args
-        };
-
-        Debug.Log("Compiler output started!");
-
-        Process compilerProcess = new();
-        compilerProcess.StartInfo = processInfo;
-        compilerProcess.ErrorDataReceived += (sender, args) => 
-        {
-            if (!string.IsNullOrEmpty(args.Data))
-            {
-                Debug.LogError($"Compiler error: {args.Data}");
-            }
-        };
-
-        compilerProcess.OutputDataReceived += (sender, args) =>
-        {
-            if (!string.IsNullOrEmpty(args.Data))
-            {
-                if (args.Data.Contains("warning"))
-                {
-                    Debug.LogWarning(args.Data);
-                }
-                else if (args.Data.Contains("error"))
-                {
-                    Debug.LogError(args.Data);
-                }
-                else
-                {
-                    Debug.Log(args.Data);
-                }
-            }
-        };
-
-        if (!compilerProcess.Start())
-        {
-            SetSuccessMsg(false, "Compiler has not been found!");
-            Debug.LogError("Check if the path is correct: " + dotnetPath);
-            return CompilationState.FAILED;
-        }
-
-        compilerProcess.BeginErrorReadLine();
-        compilerProcess.BeginOutputReadLine();
-        compilerProcess.WaitForExit();
-
-        Debug.Log("Compiler output stopped!");
-
-        return CompilationState.SUCCESS;
     }
 
     private void SetSuccessMsg(bool success, string message)

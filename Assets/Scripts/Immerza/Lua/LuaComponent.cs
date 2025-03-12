@@ -17,7 +17,7 @@ namespace ImmerzaSDK.Lua
     {
         //private static Dictionary<string, Action<LuaTable>> eventListeners = new();
 
-        [SerializeField] private TextAsset luaFile;
+        [SerializeField] private LuaAsset luaFile;
         [SerializeField] private List<Reference> references;
 
         [HideInInspector] public LuaTable scriptEnv;
@@ -30,7 +30,7 @@ namespace ImmerzaSDK.Lua
         private Action luaUpdate;
         private Action luaOnDestroy;
 
-        private readonly Func<GameObject, LuaTable> luaGetLuaComponent = GetLuaComponent;
+        //private readonly Func<GameObject, LuaTable> luaGetLuaComponent = GetLuaComponent;
 
         // Physics
         private Action<Collision> luaOnCollisionEnter;
@@ -64,7 +64,7 @@ namespace ImmerzaSDK.Lua
 
             try
             {
-                crtGlobalEnv.DoString(luaFile.text, luaFile.name, scriptEnv);
+                crtGlobalEnv.DoString(luaFile.content, luaFile.name, scriptEnv);
             }
             catch (Exception ex)
             {
@@ -85,8 +85,6 @@ namespace ImmerzaSDK.Lua
             scriptEnv.Get("on_trigger_enter", out luaOnTriggerEnter);
             scriptEnv.Get("on_trigger_stay", out luaOnTriggerStay);
             scriptEnv.Get("on_trigger_exit", out luaOnTriggerExit);
-
-            scriptEnv.Set("GetLuaComponent", luaGetLuaComponent);
 
             luaAwake?.Invoke();
         }
@@ -147,13 +145,13 @@ namespace ImmerzaSDK.Lua
             luaOnTriggerExit?.Invoke(other);
         }
 
-        public static LuaTable GetLuaComponent(GameObject target)
+        /*public static LuaTable GetLuaComponent(GameObject target)
         {
             if (target.TryGetComponent<LuaComponent>(out var comp))
             {
                 return comp.scriptEnv;
             }
             return null;
-        }
+        }*/
     }
 }
