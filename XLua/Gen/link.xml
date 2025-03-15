@@ -35,11 +35,13 @@
 		<type fullname="UnityEngine.Light" preserve="all"/>
 		<type fullname="UnityEngine.Mathf" preserve="all"/>
 		<type fullname="UnityEngine.Debug" preserve="all"/>
+		<type fullname="UnityEngine.WaitForSeconds" preserve="all"/>
 		
 	</assembly>
 
 	<assembly fullname="UnityEngine.AnimationModule">
-	    <type fullname="UnityEngine.AnimationClip" preserve="all"/>
+	    <type fullname="UnityEngine.Animator" preserve="all"/>
+		<type fullname="UnityEngine.AnimationClip" preserve="all"/>
 		
 	</assembly>
 
@@ -78,8 +80,61 @@
 		
 	</assembly>
 
+	<assembly fullname="Unity.InputSystem">
+	    <type fullname="UnityEngine.InputSystem.InputActionAsset" preserve="all"/>
+		<type fullname="UnityEngine.InputSystem.InputAction" preserve="all"/>
+		<type fullname="UnityEngine.InputSystem.InputActionReference" preserve="all"/>
+		<type fullname="UnityEngine.InputSystem.InputDevice" preserve="all"/>
+		<type fullname="UnityEngine.InputSystem.InputActionType" preserve="all"/>
+		<type fullname="UnityEngine.InputSystem.InputActionChange" preserve="all"/>
+		
+	</assembly>
+
+	<assembly fullname="Unity.XR.Interaction.Toolkit">
+	    <type fullname="UnityEngine.XR.Interaction.Toolkit.Interactors.XRSocketInteractor" preserve="all"/>
+		<type fullname="UnityEngine.XR.Interaction.Toolkit.Transformers.XRSocketGrabTransformer" preserve="all"/>
+		<type fullname="UnityEngine.XR.Interaction.Toolkit.Transformers.XRSingleGrabFreeTransformer" preserve="all"/>
+		<type fullname="UnityEngine.XR.Interaction.Toolkit.Interactors.XRSelectInteractorExtensions" preserve="all"/>
+		<type fullname="UnityEngine.XR.Interaction.Toolkit.Interactors.XRRayInteractor" preserve="all"/>
+		<type fullname="UnityEngine.XR.Interaction.Toolkit.Interactors.XRPokeInteractor" preserve="all"/>
+		<type fullname="UnityEngine.XR.Interaction.Toolkit.Interactors.XRInteractorExtensions" preserve="all"/>
+		<type fullname="UnityEngine.XR.Interaction.Toolkit.Transformers.XRGeneralGrabTransformer" preserve="all"/>
+		<type fullname="UnityEngine.XR.Interaction.Toolkit.Transformers.XRBaseGrabTransformer" preserve="all"/>
+		<type fullname="UnityEngine.XR.Interaction.Toolkit.Interactors.XRBaseInputInteractor" preserve="all"/>
+		<type fullname="UnityEngine.XR.Interaction.Toolkit.Interactors.XRBaseInteractor" preserve="all"/>
+		<type fullname="UnityEngine.XR.Interaction.Toolkit.Interactors.XRDirectInteractor" preserve="all"/>
+		<type fullname="UnityEngine.XR.Interaction.Toolkit.Transformers.XRDualGrabFreeTransformer" preserve="all"/>
+		<type fullname="UnityEngine.XR.Interaction.Toolkit.Interactables.XRBaseInteractable" preserve="all"/>
+		<type fullname="UnityEngine.XR.Interaction.Toolkit.Interactables.XRGrabInteractable" preserve="all"/>
+		<type fullname="UnityEngine.XR.Interaction.Toolkit.Interactables.XRSimpleInteractable" preserve="all"/>
+		<type fullname="UnityEngine.XR.Interaction.Toolkit.Interactables.XRFocusInteractableExtensions" preserve="all"/>
+		<type fullname="UnityEngine.XR.Interaction.Toolkit.Interactables.XRHoverInteractableExtensions" preserve="all"/>
+		<type fullname="UnityEngine.XR.Interaction.Toolkit.Interactables.XRSelectInteractableExtensions" preserve="all"/>
+		<type fullname="UnityEngine.XR.Interaction.Toolkit.SelectEnterEventArgs" preserve="all"/>
+		<type fullname="UnityEngine.XR.Interaction.Toolkit.BaseInteractionEventArgs" preserve="all"/>
+		<type fullname="UnityEngine.XR.Interaction.Toolkit.FocusExitEventArgs" preserve="all"/>
+		<type fullname="UnityEngine.XR.Interaction.Toolkit.ActivateEventArgs" preserve="all"/>
+		<type fullname="UnityEngine.XR.Interaction.Toolkit.DeactivateEventArgs" preserve="all"/>
+		<type fullname="UnityEngine.XR.Interaction.Toolkit.Interactables.IXRInteractable" preserve="all"/>
+		<type fullname="UnityEngine.XR.Interaction.Toolkit.Interactors.IXRInteractor" preserve="all"/>
+		<type fullname="UnityEngine.XR.Interaction.Toolkit.Interactables.IXRSelectInteractable" preserve="all"/>
+		<type fullname="UnityEngine.XR.Interaction.Toolkit.Interactors.IXRSelectInteractor" preserve="all"/>
+		<type fullname="UnityEngine.XR.Interaction.Toolkit.Interactables.IXRActivateInteractable" preserve="all"/>
+		<type fullname="UnityEngine.XR.Interaction.Toolkit.Interactors.IXRActivateInteractor" preserve="all"/>
+		<type fullname="UnityEngine.XR.Interaction.Toolkit.Interactables.IXRFocusInteractable" preserve="all"/>
+		<type fullname="UnityEngine.XR.Interaction.Toolkit.Interactables.IXRHoverInteractable" preserve="all"/>
+		<type fullname="UnityEngine.XR.Interaction.Toolkit.Interactors.IXRHoverInteractor" preserve="all"/>
+		<type fullname="UnityEngine.XR.Interaction.Toolkit.Interactables.IXRInteractionStrengthInteractable" preserve="all"/>
+		<type fullname="UnityEngine.XR.Interaction.Toolkit.Interactors.IXRInteractionStrengthInteractor" preserve="all"/>
+		<type fullname="UnityEngine.XR.Interaction.Toolkit.XRInteractionManager" preserve="all"/>
+		<type fullname="UnityEngine.XR.Interaction.Toolkit.SelectEnterEvent" preserve="all"/>
+		<type fullname="UnityEngine.XR.Interaction.Toolkit.SelectExitEvent" preserve="all"/>
+		
+	</assembly>
+
 	<assembly fullname="Assembly-CSharp">
-	    <type fullname="ImmerzaSDK.BreathingDetection" preserve="all"/>
+	    <type fullname="ImmerzaSDK.Lua.LuaAsset" preserve="all"/>
+		<type fullname="ImmerzaSDK.BreathingDetection" preserve="all"/>
 		<type fullname="ImmerzaSDK.ImmerzaEvents" preserve="all"/>
 		<type fullname="ImmerzaSDK.MultipathContainer" preserve="all"/>
 		<type fullname="ImmerzaSDK.Lua.LuaComponent" preserve="all"/>

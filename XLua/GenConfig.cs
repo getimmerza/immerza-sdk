@@ -15,6 +15,12 @@ using System.Reflection;
 using UnityEngine.Video;
 using UnityEngine.VFX;
 using UnityEngine.Splines;
+using UnityEngine.InputSystem;
+using UnityEngine.XR.Interaction.Toolkit.Interactors;
+using UnityEngine.XR.Interaction.Toolkit.Transformers;
+using UnityEngine.XR.Interaction.Toolkit.Interactables;
+using UnityEngine.XR.Interaction.Toolkit;
+using ImmerzaSDK.Lua;
 
 public static class GenConfig
 {
@@ -39,6 +45,7 @@ public static class GenConfig
                 typeof(TextAsset),
                 typeof(Keyframe),
                 typeof(AnimationCurve),
+                typeof(Animator),
                 typeof(AnimationClip),
                 typeof(MonoBehaviour),
                 typeof(ParticleSystem),
@@ -57,10 +64,56 @@ public static class GenConfig
                 typeof(SplineContainer),
                 typeof(SplineAnimate),
                 typeof(SplineComponent),
+                typeof(InputActionAsset),
+                typeof(InputAction),
+                typeof(InputActionReference),
+                typeof(InputDevice),
+                typeof(InputActionType),
+                typeof(InputActionChange),
+                typeof(XRSocketInteractor),
+                typeof(XRSocketGrabTransformer),
+                typeof(XRSingleGrabFreeTransformer),
+                typeof(XRSelectInteractorExtensions),
+                typeof(XRRayInteractor),
+                typeof(XRPokeInteractor),
+                typeof(XRInteractorExtensions),
+                typeof(XRGeneralGrabTransformer),
+                typeof(XRBaseGrabTransformer),
+                typeof(XRBaseInputInteractor),
+                typeof(XRBaseInteractor),
+                typeof(XRDirectInteractor),
+                typeof(XRDualGrabFreeTransformer),
+                typeof(XRBaseInteractable),
+                typeof(XRGrabInteractable),
+                typeof(XRSimpleInteractable),
+                typeof(XRFocusInteractableExtensions),
+                typeof(XRHoverInteractableExtensions),
+                typeof(XRSelectInteractableExtensions),
+                typeof(SelectEnterEventArgs),
+                typeof(BaseInteractionEventArgs),
+                typeof(FocusExitEventArgs),
+                typeof(ActivateEventArgs),
+                typeof(DeactivateEventArgs),
+                typeof(IXRInteractable),
+                typeof(IXRInteractor),
+                typeof(IXRSelectInteractable),
+                typeof(IXRSelectInteractor),
+                typeof(IXRActivateInteractable),
+                typeof(IXRActivateInteractor),
+                typeof(IXRFocusInteractable),
+                typeof(IXRHoverInteractable),
+                typeof(IXRHoverInteractor),
+                typeof(IXRInteractionStrengthInteractable),
+                typeof(IXRInteractionStrengthInteractor),
+                typeof(XRInteractionManager),
+                typeof(SelectEnterEvent),
+                typeof(SelectExitEvent),
                 typeof(Mathf),
                 typeof(System.Collections.Generic.List<int>),
                 typeof(Action<string>),
-                typeof(UnityEngine.Debug)
+                typeof(Action),
+                typeof(UnityEngine.Debug),
+                typeof(LuaAsset)
             };
 
     [CSharpCallLua]

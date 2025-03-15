@@ -34,6 +34,8 @@ namespace XLua
 				translator.RegisterPushAndGetAndUpdate<UnityEngine.Ray>(translator.PushUnityEngineRay, translator.Get, translator.UpdateUnityEngineRay);
 				translator.RegisterPushAndGetAndUpdate<UnityEngine.Bounds>(translator.PushUnityEngineBounds, translator.Get, translator.UpdateUnityEngineBounds);
 				translator.RegisterPushAndGetAndUpdate<UnityEngine.Ray2D>(translator.PushUnityEngineRay2D, translator.Get, translator.UpdateUnityEngineRay2D);
+				translator.RegisterPushAndGetAndUpdate<UnityEngine.InputSystem.InputActionType>(translator.PushUnityEngineInputSystemInputActionType, translator.Get, translator.UpdateUnityEngineInputSystemInputActionType);
+				translator.RegisterPushAndGetAndUpdate<UnityEngine.InputSystem.InputActionChange>(translator.PushUnityEngineInputSystemInputActionChange, translator.Get, translator.UpdateUnityEngineInputSystemInputActionChange);
 			
 			}
         }
@@ -570,6 +572,174 @@ namespace XLua
             }
         }
         
+        int UnityEngineInputSystemInputActionType_TypeID = -1;
+		int UnityEngineInputSystemInputActionType_EnumRef = -1;
+        
+        public void PushUnityEngineInputSystemInputActionType(RealStatePtr L, UnityEngine.InputSystem.InputActionType val)
+        {
+            if (UnityEngineInputSystemInputActionType_TypeID == -1)
+            {
+			    bool is_first;
+                UnityEngineInputSystemInputActionType_TypeID = getTypeId(L, typeof(UnityEngine.InputSystem.InputActionType), out is_first);
+				
+				if (UnityEngineInputSystemInputActionType_EnumRef == -1)
+				{
+				    Utils.LoadCSTable(L, typeof(UnityEngine.InputSystem.InputActionType));
+				    UnityEngineInputSystemInputActionType_EnumRef = LuaAPI.luaL_ref(L, LuaIndexes.LUA_REGISTRYINDEX);
+				}
+				
+            }
+			
+			if (LuaAPI.xlua_tryget_cachedud(L, (int)val, UnityEngineInputSystemInputActionType_EnumRef) == 1)
+            {
+			    return;
+			}
+			
+            IntPtr buff = LuaAPI.xlua_pushstruct(L, 4, UnityEngineInputSystemInputActionType_TypeID);
+            if (!CopyByValue.Pack(buff, 0, (int)val))
+            {
+                throw new Exception("pack fail fail for UnityEngine.InputSystem.InputActionType ,value="+val);
+            }
+			
+			LuaAPI.lua_getref(L, UnityEngineInputSystemInputActionType_EnumRef);
+			LuaAPI.lua_pushvalue(L, -2);
+			LuaAPI.xlua_rawseti(L, -2, (int)val);
+			LuaAPI.lua_pop(L, 1);
+			
+        }
+		
+        public void Get(RealStatePtr L, int index, out UnityEngine.InputSystem.InputActionType val)
+        {
+		    LuaTypes type = LuaAPI.lua_type(L, index);
+            if (type == LuaTypes.LUA_TUSERDATA )
+            {
+			    if (LuaAPI.xlua_gettypeid(L, index) != UnityEngineInputSystemInputActionType_TypeID)
+				{
+				    throw new Exception("invalid userdata for UnityEngine.InputSystem.InputActionType");
+				}
+				
+                IntPtr buff = LuaAPI.lua_touserdata(L, index);
+				int e;
+                if (!CopyByValue.UnPack(buff, 0, out e))
+                {
+                    throw new Exception("unpack fail for UnityEngine.InputSystem.InputActionType");
+                }
+				val = (UnityEngine.InputSystem.InputActionType)e;
+                
+            }
+            else
+            {
+                val = (UnityEngine.InputSystem.InputActionType)objectCasters.GetCaster(typeof(UnityEngine.InputSystem.InputActionType))(L, index, null);
+            }
+        }
+		
+        public void UpdateUnityEngineInputSystemInputActionType(RealStatePtr L, int index, UnityEngine.InputSystem.InputActionType val)
+        {
+		    
+            if (LuaAPI.lua_type(L, index) == LuaTypes.LUA_TUSERDATA)
+            {
+			    if (LuaAPI.xlua_gettypeid(L, index) != UnityEngineInputSystemInputActionType_TypeID)
+				{
+				    throw new Exception("invalid userdata for UnityEngine.InputSystem.InputActionType");
+				}
+				
+                IntPtr buff = LuaAPI.lua_touserdata(L, index);
+                if (!CopyByValue.Pack(buff, 0,  (int)val))
+                {
+                    throw new Exception("pack fail for UnityEngine.InputSystem.InputActionType ,value="+val);
+                }
+            }
+			
+            else
+            {
+                throw new Exception("try to update a data with lua type:" + LuaAPI.lua_type(L, index));
+            }
+        }
+        
+        int UnityEngineInputSystemInputActionChange_TypeID = -1;
+		int UnityEngineInputSystemInputActionChange_EnumRef = -1;
+        
+        public void PushUnityEngineInputSystemInputActionChange(RealStatePtr L, UnityEngine.InputSystem.InputActionChange val)
+        {
+            if (UnityEngineInputSystemInputActionChange_TypeID == -1)
+            {
+			    bool is_first;
+                UnityEngineInputSystemInputActionChange_TypeID = getTypeId(L, typeof(UnityEngine.InputSystem.InputActionChange), out is_first);
+				
+				if (UnityEngineInputSystemInputActionChange_EnumRef == -1)
+				{
+				    Utils.LoadCSTable(L, typeof(UnityEngine.InputSystem.InputActionChange));
+				    UnityEngineInputSystemInputActionChange_EnumRef = LuaAPI.luaL_ref(L, LuaIndexes.LUA_REGISTRYINDEX);
+				}
+				
+            }
+			
+			if (LuaAPI.xlua_tryget_cachedud(L, (int)val, UnityEngineInputSystemInputActionChange_EnumRef) == 1)
+            {
+			    return;
+			}
+			
+            IntPtr buff = LuaAPI.xlua_pushstruct(L, 4, UnityEngineInputSystemInputActionChange_TypeID);
+            if (!CopyByValue.Pack(buff, 0, (int)val))
+            {
+                throw new Exception("pack fail fail for UnityEngine.InputSystem.InputActionChange ,value="+val);
+            }
+			
+			LuaAPI.lua_getref(L, UnityEngineInputSystemInputActionChange_EnumRef);
+			LuaAPI.lua_pushvalue(L, -2);
+			LuaAPI.xlua_rawseti(L, -2, (int)val);
+			LuaAPI.lua_pop(L, 1);
+			
+        }
+		
+        public void Get(RealStatePtr L, int index, out UnityEngine.InputSystem.InputActionChange val)
+        {
+		    LuaTypes type = LuaAPI.lua_type(L, index);
+            if (type == LuaTypes.LUA_TUSERDATA )
+            {
+			    if (LuaAPI.xlua_gettypeid(L, index) != UnityEngineInputSystemInputActionChange_TypeID)
+				{
+				    throw new Exception("invalid userdata for UnityEngine.InputSystem.InputActionChange");
+				}
+				
+                IntPtr buff = LuaAPI.lua_touserdata(L, index);
+				int e;
+                if (!CopyByValue.UnPack(buff, 0, out e))
+                {
+                    throw new Exception("unpack fail for UnityEngine.InputSystem.InputActionChange");
+                }
+				val = (UnityEngine.InputSystem.InputActionChange)e;
+                
+            }
+            else
+            {
+                val = (UnityEngine.InputSystem.InputActionChange)objectCasters.GetCaster(typeof(UnityEngine.InputSystem.InputActionChange))(L, index, null);
+            }
+        }
+		
+        public void UpdateUnityEngineInputSystemInputActionChange(RealStatePtr L, int index, UnityEngine.InputSystem.InputActionChange val)
+        {
+		    
+            if (LuaAPI.lua_type(L, index) == LuaTypes.LUA_TUSERDATA)
+            {
+			    if (LuaAPI.xlua_gettypeid(L, index) != UnityEngineInputSystemInputActionChange_TypeID)
+				{
+				    throw new Exception("invalid userdata for UnityEngine.InputSystem.InputActionChange");
+				}
+				
+                IntPtr buff = LuaAPI.lua_touserdata(L, index);
+                if (!CopyByValue.Pack(buff, 0,  (int)val))
+                {
+                    throw new Exception("pack fail for UnityEngine.InputSystem.InputActionChange ,value="+val);
+                }
+            }
+			
+            else
+            {
+                throw new Exception("try to update a data with lua type:" + LuaAPI.lua_type(L, index));
+            }
+        }
+        
         
 		// table cast optimze
 		
@@ -629,6 +799,18 @@ namespace XLua
 				translator.PushUnityEngineRay2D(L, array[index]);
 				return true;
 			}
+			else if (type == typeof(UnityEngine.InputSystem.InputActionType[]))
+			{
+			    UnityEngine.InputSystem.InputActionType[] array = obj as UnityEngine.InputSystem.InputActionType[];
+				translator.PushUnityEngineInputSystemInputActionType(L, array[index]);
+				return true;
+			}
+			else if (type == typeof(UnityEngine.InputSystem.InputActionChange[]))
+			{
+			    UnityEngine.InputSystem.InputActionChange[] array = obj as UnityEngine.InputSystem.InputActionChange[];
+				translator.PushUnityEngineInputSystemInputActionChange(L, array[index]);
+				return true;
+			}
             return false;
 		}
 		
@@ -680,6 +862,18 @@ namespace XLua
 			else if (type == typeof(UnityEngine.Ray2D[]))
 			{
 			    UnityEngine.Ray2D[] array = obj as UnityEngine.Ray2D[];
+				translator.Get(L, obj_idx, out array[array_idx]);
+				return true;
+			}
+			else if (type == typeof(UnityEngine.InputSystem.InputActionType[]))
+			{
+			    UnityEngine.InputSystem.InputActionType[] array = obj as UnityEngine.InputSystem.InputActionType[];
+				translator.Get(L, obj_idx, out array[array_idx]);
+				return true;
+			}
+			else if (type == typeof(UnityEngine.InputSystem.InputActionChange[]))
+			{
+			    UnityEngine.InputSystem.InputActionChange[] array = obj as UnityEngine.InputSystem.InputActionChange[];
 				translator.Get(L, obj_idx, out array[array_idx]);
 				return true;
 			}

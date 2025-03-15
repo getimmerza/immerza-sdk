@@ -19,6 +19,8 @@ using LuaCSFunction = XLua.LuaDLL.lua_CSFunction;
 using System.Collections.Generic;
 using System;
 using System.Reflection;
+using System.Diagnostics;
+using System.IO;
 
 namespace XLua
 {
@@ -533,9 +535,9 @@ namespace XLua
         }
 
         public MethodWrap _GenMethodWrap(Type type, string methodName, IEnumerable<MemberInfo> methodBases, bool forceCheck = false)
-        { 
+        {
             List<OverloadMethodWrap> overloads = new List<OverloadMethodWrap>();
-            foreach(var methodBase in methodBases)
+            foreach (var methodBase in methodBases)
             {
                 var mb = methodBase as MethodBase;
                 if (mb == null)
