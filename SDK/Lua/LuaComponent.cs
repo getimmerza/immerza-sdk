@@ -54,8 +54,8 @@ namespace ImmerzaSDK.Lua
             }
 
             scriptEnv.Set("self", this);
-
             scriptEnv.Set("gameObject", gameObject);
+            scriptEnv.Set("transform", transform);
 
             foreach (Reference refin in references)
             {
@@ -149,7 +149,7 @@ namespace ImmerzaSDK.Lua
 
         private void OnCollisionExit(Collision collision)
         {
-            luaOnCollisionExit.Invoke(collision);
+            luaOnCollisionExit?.Invoke(collision);
         }
 
         private void OnTriggerEnter(Collider other)
@@ -180,6 +180,21 @@ namespace ImmerzaSDK.Lua
             if (eventListeners.TryGetValue(eventName, out Action<LuaTable> callback))
             {
                 callback(eventData);
+            }
+        }
+    }
+
+    public static class LuaComponentConfig
+    {
+        [LuaCallCSharp]
+        public static List<Type> LuaCallCSharp
+        {
+            get
+            {
+                return new List<Type>()
+                {
+                    typeof(WaitForSeconds)
+                };
             }
         }
     }

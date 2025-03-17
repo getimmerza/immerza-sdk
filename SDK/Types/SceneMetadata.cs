@@ -1,14 +1,13 @@
 ﻿using Newtonsoft.Json;
 using System.IO;
+using System.Collections.Generic;
 
 namespace ImmerzaSDK.Types
 {
     public class SceneMetadata
     {
-        [JsonProperty("scene_id")]
-        public string sceneID;
-        [JsonProperty("hash")]
-        public uint hash;
+        [JsonProperty("platforms")]
+        public List<PlatformInfo> platforms = new();
         [JsonProperty("sdk_version")]
         public string sdkVersion;
         [JsonProperty("is_using_bg_music")]
@@ -22,5 +21,21 @@ namespace ImmerzaSDK.Types
             string jsonContent = JsonConvert.SerializeObject(this, Formatting.Indented);
             File.WriteAllText(fielPath, jsonContent);
         }
+    }
+
+    public class PlatformInfo
+    {
+        public PlatformInfo(string platformId, uint hash) 
+        { 
+            this.platformId = platformId;
+            this.hash = hash;
+        }
+
+        [JsonProperty("platform_id")]
+        public string platformId;
+        [JsonProperty("file_id")]
+        public string fileId = "0";
+        [JsonProperty("hash")]
+        public uint hash;
     }
 }

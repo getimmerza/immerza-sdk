@@ -293,10 +293,10 @@ namespace XLua.CSObjectWrap
             translator.DelayWrapLoader(typeof(ImmerzaSDK.MultipathContainer), ImmerzaSDKMultipathContainerWrap.__Register);
         
         
-            translator.DelayWrapLoader(typeof(UnityEngine.WaitForSeconds), UnityEngineWaitForSecondsWrap.__Register);
-        
-        
             translator.DelayWrapLoader(typeof(ImmerzaSDK.Lua.LuaComponent), ImmerzaSDKLuaLuaComponentWrap.__Register);
+        
+        
+            translator.DelayWrapLoader(typeof(UnityEngine.WaitForSeconds), UnityEngineWaitForSecondsWrap.__Register);
         
         
         
