@@ -21,6 +21,8 @@ using UnityEngine.XR.Interaction.Toolkit.Transformers;
 using UnityEngine.XR.Interaction.Toolkit.Interactables;
 using UnityEngine.XR.Interaction.Toolkit;
 using ImmerzaSDK.Lua;
+using TMPro;
+using UnityEngine.UI;
 
 public static class GenConfig
 {
@@ -37,6 +39,7 @@ public static class GenConfig
                 typeof(Bounds),
                 typeof(Ray2D),
                 typeof(Time),
+                typeof(UnityEngine.Random),
                 typeof(GameObject),
                 typeof(Component),
                 typeof(Behaviour),
@@ -108,6 +111,12 @@ public static class GenConfig
                 typeof(XRInteractionManager),
                 typeof(SelectEnterEvent),
                 typeof(SelectExitEvent),
+                typeof(TMP_Text),
+                typeof(TMP_Dropdown),
+                typeof(Button),
+                typeof(Slider),
+                typeof(Texture2D),
+                typeof(Sprite),
                 typeof(Mathf),
                 typeof(System.Collections.Generic.List<int>),
                 typeof(Action<string>),

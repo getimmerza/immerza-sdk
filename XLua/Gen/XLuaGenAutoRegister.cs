@@ -55,6 +55,9 @@ namespace XLua.CSObjectWrap
             translator.DelayWrapLoader(typeof(UnityEngine.Time), UnityEngineTimeWrap.__Register);
         
         
+            translator.DelayWrapLoader(typeof(UnityEngine.Random), UnityEngineRandomWrap.__Register);
+        
+        
             translator.DelayWrapLoader(typeof(UnityEngine.GameObject), UnityEngineGameObjectWrap.__Register);
         
         
@@ -171,13 +174,13 @@ namespace XLua.CSObjectWrap
         
             translator.DelayWrapLoader(typeof(UnityEngine.XR.Interaction.Toolkit.Interactors.XRPokeInteractor), UnityEngineXRInteractionToolkitInteractorsXRPokeInteractorWrap.__Register);
         
-        
-            translator.DelayWrapLoader(typeof(UnityEngine.XR.Interaction.Toolkit.Interactors.XRInteractorExtensions), UnityEngineXRInteractionToolkitInteractorsXRInteractorExtensionsWrap.__Register);
-        
         }
         
         static void wrapInit1(LuaEnv luaenv, ObjectTranslator translator)
         {
+        
+            translator.DelayWrapLoader(typeof(UnityEngine.XR.Interaction.Toolkit.Interactors.XRInteractorExtensions), UnityEngineXRInteractionToolkitInteractorsXRInteractorExtensionsWrap.__Register);
+        
         
             translator.DelayWrapLoader(typeof(UnityEngine.XR.Interaction.Toolkit.Transformers.XRGeneralGrabTransformer), UnityEngineXRInteractionToolkitTransformersXRGeneralGrabTransformerWrap.__Register);
         
@@ -270,6 +273,24 @@ namespace XLua.CSObjectWrap
         
         
             translator.DelayWrapLoader(typeof(UnityEngine.XR.Interaction.Toolkit.SelectExitEvent), UnityEngineXRInteractionToolkitSelectExitEventWrap.__Register);
+        
+        
+            translator.DelayWrapLoader(typeof(TMPro.TMP_Text), TMProTMP_TextWrap.__Register);
+        
+        
+            translator.DelayWrapLoader(typeof(TMPro.TMP_Dropdown), TMProTMP_DropdownWrap.__Register);
+        
+        
+            translator.DelayWrapLoader(typeof(UnityEngine.UI.Button), UnityEngineUIButtonWrap.__Register);
+        
+        
+            translator.DelayWrapLoader(typeof(UnityEngine.UI.Slider), UnityEngineUISliderWrap.__Register);
+        
+        
+            translator.DelayWrapLoader(typeof(UnityEngine.Texture2D), UnityEngineTexture2DWrap.__Register);
+        
+        
+            translator.DelayWrapLoader(typeof(UnityEngine.Sprite), UnityEngineSpriteWrap.__Register);
         
         
             translator.DelayWrapLoader(typeof(UnityEngine.Mathf), UnityEngineMathfWrap.__Register);
