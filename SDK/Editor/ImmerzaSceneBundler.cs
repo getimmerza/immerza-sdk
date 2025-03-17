@@ -16,12 +16,11 @@ using ImmerzaSDK.Util;
 using System.Diagnostics;
 using Debug = UnityEngine.Debug;
 using Newtonsoft.Json.Linq;
+using System.Collections;
+using Unity.EditorCoroutines.Editor;
 
 public class ImmerzaSceneBundler : EditorWindow
 {
-    private const string BuildTargetWindows = "Windows";
-    private const string BuildTargetAndroid = "Android";
-
     public VisualTreeAsset treeAsset = null;
     public Sprite logoSprite = null;
     public TextAsset dummyFile = null;
@@ -33,7 +32,6 @@ public class ImmerzaSceneBundler : EditorWindow
     private Button refreshBtn = null;
     private Label successLabel = null;
     private Toggle openExportFolderTgl = null;
-    private DropdownField buildTargetCmb = null;
 
     [MenuItem("Immerza/Scene Bundler")]
     public static void ShowSceneBundler()
@@ -70,11 +68,6 @@ public class ImmerzaSceneBundler : EditorWindow
         successLabel.visible = false;
 
         openExportFolderTgl = root.Q<Toggle>("OpenExportFolder");
-
-        buildTargetCmb = root.Q<DropdownField>("BuildTarget");
-        buildTargetCmb.choices.Add(BuildTargetAndroid);
-        buildTargetCmb.choices.Add(BuildTargetWindows);
-        buildTargetCmb.value = BuildTargetAndroid;
 
         UpdateSceneList();
 
@@ -147,7 +140,6 @@ public class ImmerzaSceneBundler : EditorWindow
         ImmerzaUtil.AddAssetPath(assetPaths, AssetDatabase.GetAssetPath(dummyFile));
         assetMetadata.AddAsset("Gen", "NONE");
 
-#if BUILD_BUNDLE
         AssetBundleBuild[] exportMap = new AssetBundleBuild[2];
 
         exportMap[0].assetBundleName = "immerza_scene";
@@ -156,15 +148,28 @@ public class ImmerzaSceneBundler : EditorWindow
         exportMap[1].assetBundleName = "immerza_assets";
         exportMap[1].assetNames = assetPaths.ToArray();
 
-        BuildTarget buildTarget = buildTargetCmb.value switch
-        {
-            BuildTargetWindows => BuildTarget.StandaloneWindows64,
-            _ => BuildTarget.Android
-        };
+        sceneMetadata.sdkVersion = AssetDatabase.LoadAssetAtPath<TextAsset>("Assets/Immerza/Version.txt").ToString();
 
-        BuildPipeline.BuildAssetBundles(bundleDir, exportMap, BuildAssetBundleOptions.ForceRebuildAssetBundle, buildTarget);
-#endif
+        ExportBundles(bundleDir, exportMap, sceneMetadata, assetMetadata, BuildTarget.Android);
+        ExportBundles(bundleDir, exportMap, sceneMetadata, assetMetadata, BuildTarget.StandaloneWindows64);
+        sceneMetadata.SaveMetaData(Path.Combine(bundleDir, "immerza_metadata.json"));
+
+        SetSuccessMsg(true);
+
+        if (openExportFolderTgl.value)
+        {
+            Process.Start("explorer.exe", bundleDir);
+        }
+    }
+
+    private void ExportBundles(string bundleDir, AssetBundleBuild[] exportMap, SceneMetadata sceneMetadata, AssetMetadata assetMetadata, BuildTarget platform)
+    {
+        BuildPipeline.BuildAssetBundles(bundleDir, exportMap, BuildAssetBundleOptions.ForceRebuildAssetBundle, platform);
         sceneMetadata.assetMetaData = assetMetadata;
+
+        string platformId = platform == BuildTarget.Android ? "android" : "win";
+
+        sceneMetadata.isUsingBgMusic = FindAnyObjectByType<BackgroundAudio>(FindObjectsInactive.Include) != null;
 
         try
         {
@@ -173,14 +178,13 @@ public class ImmerzaSceneBundler : EditorWindow
             File.Delete(Path.Combine(bundleDir, "immerza_scene.manifest"));
             File.Delete(Path.Combine(bundleDir, "immerza_assets.manifest"));
 
-            string archivePath = Path.Combine(bundleDir, "immerza_data.bundle");
+            string archivePath = Path.Combine(bundleDir, "immerza_scene_" + platformId + ".bundle");
 
             if (File.Exists(archivePath))
             {
                 File.Delete(archivePath);
             }
 
-#if BUILD_BUNDLE
             using (Stream stream = File.OpenWrite(archivePath))
             using (IWriter writer = WriterFactory.Open(stream, ArchiveType.Tar, SharpCompress.Common.CompressionType.GZip))
             {
@@ -189,7 +193,7 @@ public class ImmerzaSceneBundler : EditorWindow
             }
 
             byte[] dataScene = File.ReadAllBytes(Path.Combine(bundleDir, "immerza_scene"));
-            byte[] dataAssets= File.ReadAllBytes(Path.Combine(bundleDir, "immerza_assets"));
+            byte[] dataAssets = File.ReadAllBytes(Path.Combine(bundleDir, "immerza_assets"));
 
             byte[] combined = new byte[dataScene.Length + dataAssets.Length];
             Buffer.BlockCopy(dataScene, 0, combined, 0, dataScene.Length);
@@ -197,14 +201,8 @@ public class ImmerzaSceneBundler : EditorWindow
 
             uint crc = 0xffffffff;
             crc = ImmerzaUtil.ComputeChecksum(combined);
-#else
-            uint crc = 0xdeadbeef;
-#endif
-            sceneMetadata.hash = crc;
-            sceneMetadata.sceneID = "0";
-            //sceneMetadata.sdkVersion = ImmerzaUtil.IsRunningInPackage() ? GetPackageVersion() : "dev";
-            sceneMetadata.isUsingBgMusic = FindAnyObjectByType<BackgroundAudio>(FindObjectsInactive.Include) != null;
-            sceneMetadata.SaveMetaData(Path.Combine(bundleDir, "immerza_metadata.json"));
+
+            sceneMetadata.platforms.Add(new PlatformInfo(platformId, crc));
 
 #if BUILD_BUNDLE
             File.Delete(Path.Combine(bundleDir, "immerza_scene"));
@@ -213,16 +211,19 @@ public class ImmerzaSceneBundler : EditorWindow
         }
         catch (Exception exc)
         {
+            System.IO.DirectoryInfo di = new(bundleDir);
+
+            foreach (FileInfo file in di.EnumerateFiles())
+            {
+                file.Delete();
+            }
+            foreach (DirectoryInfo dir in di.EnumerateDirectories())
+            {
+                dir.Delete(true);
+            }
+
             UnityEngine.Debug.LogException(exc);
             SetSuccessMsg(false);
-            return;
-        }
-
-        SetSuccessMsg(true);
-
-        if (openExportFolderTgl.value)
-        {
-            Process.Start("explorer.exe", bundleDir);
         }
     }
 

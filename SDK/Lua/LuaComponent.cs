@@ -15,7 +15,9 @@ namespace ImmerzaSDK.Lua
     [LuaCallCSharp]
     public class LuaComponent : MonoBehaviour
     {
-        [SerializeField] private LuaAsset luaFile;
+        [SerializeField] private LuaAsset mainLuaScript;
+        [SerializeField, Tooltip("These scripts can be loaded with 'require'.")] 
+        private List<LuaAsset> additionalLuaScripts;
         [SerializeField] private List<Reference> references;
 
         [HideInInspector] public LuaTable scriptEnv;
@@ -52,17 +54,23 @@ namespace ImmerzaSDK.Lua
             }
 
             scriptEnv.Set("self", this);
-
             scriptEnv.Set("gameObject", gameObject);
+            scriptEnv.Set("transform", transform);
 
             foreach (Reference refin in references)
             {
                 scriptEnv.Set(refin.variableName, refin.value);
             }
 
+
+            if (!crtGlobalEnv.customLoaders.Contains(ComponentCustomLoader))
+            {
+                crtGlobalEnv.AddLoader(ComponentCustomLoader);
+            }
+
             try
             {
-                crtGlobalEnv.DoString(luaFile.content, luaFile.name, scriptEnv);
+                crtGlobalEnv.DoString(mainLuaScript.content, mainLuaScript.name, scriptEnv);
             }
             catch (Exception ex)
             {
@@ -85,6 +93,22 @@ namespace ImmerzaSDK.Lua
             scriptEnv.Get("on_trigger_exit", out luaOnTriggerExit);
 
             luaAwake?.Invoke();
+        }
+
+        private byte[] ComponentCustomLoader(ref string filename)
+        {
+            LuaAsset foundAsset = null;
+            foreach (LuaAsset asset in additionalLuaScripts)
+            {
+                if (asset.name.Equals(filename))
+                {
+                    foundAsset = asset;
+                }
+            }
+
+            if (additionalLuaScripts.Count == 0 || foundAsset == null) { return null; }
+
+            return System.Text.Encoding.UTF8.GetBytes(foundAsset.content);
         }
 
         private void Start()
@@ -125,7 +149,7 @@ namespace ImmerzaSDK.Lua
 
         private void OnCollisionExit(Collision collision)
         {
-            luaOnCollisionExit.Invoke(collision);
+            luaOnCollisionExit?.Invoke(collision);
         }
 
         private void OnTriggerEnter(Collider other)
@@ -156,6 +180,21 @@ namespace ImmerzaSDK.Lua
             if (eventListeners.TryGetValue(eventName, out Action<LuaTable> callback))
             {
                 callback(eventData);
+            }
+        }
+    }
+
+    public static class LuaComponentConfig
+    {
+        [LuaCallCSharp]
+        public static List<Type> LuaCallCSharp
+        {
+            get
+            {
+                return new List<Type>()
+                {
+                    typeof(WaitForSeconds)
+                };
             }
         }
     }

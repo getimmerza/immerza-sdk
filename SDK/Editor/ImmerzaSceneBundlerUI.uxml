@@ -6,7 +6,6 @@
         <ui:GroupBox style="margin-left: 4px; -unity-font-definition: url(&quot;project://database/Assets/Immerza/SDK/Editor/Assets/PlusJakartaSans-Regular.ttf?fileID=12800000&amp;guid=aa40edd705271404c9a7a5cc3d97ac1f&amp;type=3#PlusJakartaSans-Regular&quot;);">
             <ui:Label tabindex="-1" text="Export Settings:" parse-escape-sequences="true" display-tooltip-when-elided="true" name="ExportLabel" view-data-key="ExportLabel" style="-unity-font-style: bold;" />
             <ui:TextField picking-mode="Ignore" label="Export path:" value="ImmerzaBundles" password="false" readonly="false" is-delayed="false" hide-mobile-input="false" auto-correction="false" multiline="false" name="ExportPath" view-data-key="ExportPath" tooltip="Path to where the bundle will be exported" />
-            <ui:DropdownField label="Build target:" name="BuildTarget" view-data-key="BuildTarget" />
             <ui:Toggle label="Open Folder After Export" name="OpenExportFolder" view-data-key="OpenExportFolder" />
             <ui:Button text="Export Scene" parse-escape-sequences="true" display-tooltip-when-elided="true" view-data-key="ExportButton" name="ExportButton" style="margin-top: 16px; rotate: 0; display: flex; visibility: visible; opacity: 1;" />
         </ui:GroupBox>

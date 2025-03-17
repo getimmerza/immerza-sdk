@@ -55,6 +55,9 @@ namespace XLua.CSObjectWrap
             translator.DelayWrapLoader(typeof(UnityEngine.Time), UnityEngineTimeWrap.__Register);
         
         
+            translator.DelayWrapLoader(typeof(UnityEngine.Random), UnityEngineRandomWrap.__Register);
+        
+        
             translator.DelayWrapLoader(typeof(UnityEngine.GameObject), UnityEngineGameObjectWrap.__Register);
         
         
@@ -77,6 +80,9 @@ namespace XLua.CSObjectWrap
         
         
             translator.DelayWrapLoader(typeof(UnityEngine.AnimationCurve), UnityEngineAnimationCurveWrap.__Register);
+        
+        
+            translator.DelayWrapLoader(typeof(UnityEngine.Animator), UnityEngineAnimatorWrap.__Register);
         
         
             translator.DelayWrapLoader(typeof(UnityEngine.AnimationClip), UnityEngineAnimationClipWrap.__Register);
@@ -133,6 +139,160 @@ namespace XLua.CSObjectWrap
             translator.DelayWrapLoader(typeof(UnityEngine.Splines.SplineComponent), UnityEngineSplinesSplineComponentWrap.__Register);
         
         
+            translator.DelayWrapLoader(typeof(UnityEngine.InputSystem.InputActionAsset), UnityEngineInputSystemInputActionAssetWrap.__Register);
+        
+        
+            translator.DelayWrapLoader(typeof(UnityEngine.InputSystem.InputAction), UnityEngineInputSystemInputActionWrap.__Register);
+        
+        
+            translator.DelayWrapLoader(typeof(UnityEngine.InputSystem.InputActionReference), UnityEngineInputSystemInputActionReferenceWrap.__Register);
+        
+        
+            translator.DelayWrapLoader(typeof(UnityEngine.InputSystem.InputDevice), UnityEngineInputSystemInputDeviceWrap.__Register);
+        
+        
+            translator.DelayWrapLoader(typeof(UnityEngine.InputSystem.InputActionType), UnityEngineInputSystemInputActionTypeWrap.__Register);
+        
+        
+            translator.DelayWrapLoader(typeof(UnityEngine.InputSystem.InputActionChange), UnityEngineInputSystemInputActionChangeWrap.__Register);
+        
+        
+            translator.DelayWrapLoader(typeof(UnityEngine.XR.Interaction.Toolkit.Interactors.XRSocketInteractor), UnityEngineXRInteractionToolkitInteractorsXRSocketInteractorWrap.__Register);
+        
+        
+            translator.DelayWrapLoader(typeof(UnityEngine.XR.Interaction.Toolkit.Transformers.XRSocketGrabTransformer), UnityEngineXRInteractionToolkitTransformersXRSocketGrabTransformerWrap.__Register);
+        
+        
+            translator.DelayWrapLoader(typeof(UnityEngine.XR.Interaction.Toolkit.Transformers.XRSingleGrabFreeTransformer), UnityEngineXRInteractionToolkitTransformersXRSingleGrabFreeTransformerWrap.__Register);
+        
+        
+            translator.DelayWrapLoader(typeof(UnityEngine.XR.Interaction.Toolkit.Interactors.XRSelectInteractorExtensions), UnityEngineXRInteractionToolkitInteractorsXRSelectInteractorExtensionsWrap.__Register);
+        
+        
+            translator.DelayWrapLoader(typeof(UnityEngine.XR.Interaction.Toolkit.Interactors.XRRayInteractor), UnityEngineXRInteractionToolkitInteractorsXRRayInteractorWrap.__Register);
+        
+        
+            translator.DelayWrapLoader(typeof(UnityEngine.XR.Interaction.Toolkit.Interactors.XRPokeInteractor), UnityEngineXRInteractionToolkitInteractorsXRPokeInteractorWrap.__Register);
+        
+        }
+        
+        static void wrapInit1(LuaEnv luaenv, ObjectTranslator translator)
+        {
+        
+            translator.DelayWrapLoader(typeof(UnityEngine.XR.Interaction.Toolkit.Interactors.XRInteractorExtensions), UnityEngineXRInteractionToolkitInteractorsXRInteractorExtensionsWrap.__Register);
+        
+        
+            translator.DelayWrapLoader(typeof(UnityEngine.XR.Interaction.Toolkit.Transformers.XRGeneralGrabTransformer), UnityEngineXRInteractionToolkitTransformersXRGeneralGrabTransformerWrap.__Register);
+        
+        
+            translator.DelayWrapLoader(typeof(UnityEngine.XR.Interaction.Toolkit.Transformers.XRBaseGrabTransformer), UnityEngineXRInteractionToolkitTransformersXRBaseGrabTransformerWrap.__Register);
+        
+        
+            translator.DelayWrapLoader(typeof(UnityEngine.XR.Interaction.Toolkit.Interactors.XRBaseInputInteractor), UnityEngineXRInteractionToolkitInteractorsXRBaseInputInteractorWrap.__Register);
+        
+        
+            translator.DelayWrapLoader(typeof(UnityEngine.XR.Interaction.Toolkit.Interactors.XRBaseInteractor), UnityEngineXRInteractionToolkitInteractorsXRBaseInteractorWrap.__Register);
+        
+        
+            translator.DelayWrapLoader(typeof(UnityEngine.XR.Interaction.Toolkit.Interactors.XRDirectInteractor), UnityEngineXRInteractionToolkitInteractorsXRDirectInteractorWrap.__Register);
+        
+        
+            translator.DelayWrapLoader(typeof(UnityEngine.XR.Interaction.Toolkit.Transformers.XRDualGrabFreeTransformer), UnityEngineXRInteractionToolkitTransformersXRDualGrabFreeTransformerWrap.__Register);
+        
+        
+            translator.DelayWrapLoader(typeof(UnityEngine.XR.Interaction.Toolkit.Interactables.XRBaseInteractable), UnityEngineXRInteractionToolkitInteractablesXRBaseInteractableWrap.__Register);
+        
+        
+            translator.DelayWrapLoader(typeof(UnityEngine.XR.Interaction.Toolkit.Interactables.XRGrabInteractable), UnityEngineXRInteractionToolkitInteractablesXRGrabInteractableWrap.__Register);
+        
+        
+            translator.DelayWrapLoader(typeof(UnityEngine.XR.Interaction.Toolkit.Interactables.XRSimpleInteractable), UnityEngineXRInteractionToolkitInteractablesXRSimpleInteractableWrap.__Register);
+        
+        
+            translator.DelayWrapLoader(typeof(UnityEngine.XR.Interaction.Toolkit.Interactables.XRFocusInteractableExtensions), UnityEngineXRInteractionToolkitInteractablesXRFocusInteractableExtensionsWrap.__Register);
+        
+        
+            translator.DelayWrapLoader(typeof(UnityEngine.XR.Interaction.Toolkit.Interactables.XRHoverInteractableExtensions), UnityEngineXRInteractionToolkitInteractablesXRHoverInteractableExtensionsWrap.__Register);
+        
+        
+            translator.DelayWrapLoader(typeof(UnityEngine.XR.Interaction.Toolkit.Interactables.XRSelectInteractableExtensions), UnityEngineXRInteractionToolkitInteractablesXRSelectInteractableExtensionsWrap.__Register);
+        
+        
+            translator.DelayWrapLoader(typeof(UnityEngine.XR.Interaction.Toolkit.SelectEnterEventArgs), UnityEngineXRInteractionToolkitSelectEnterEventArgsWrap.__Register);
+        
+        
+            translator.DelayWrapLoader(typeof(UnityEngine.XR.Interaction.Toolkit.BaseInteractionEventArgs), UnityEngineXRInteractionToolkitBaseInteractionEventArgsWrap.__Register);
+        
+        
+            translator.DelayWrapLoader(typeof(UnityEngine.XR.Interaction.Toolkit.FocusExitEventArgs), UnityEngineXRInteractionToolkitFocusExitEventArgsWrap.__Register);
+        
+        
+            translator.DelayWrapLoader(typeof(UnityEngine.XR.Interaction.Toolkit.ActivateEventArgs), UnityEngineXRInteractionToolkitActivateEventArgsWrap.__Register);
+        
+        
+            translator.DelayWrapLoader(typeof(UnityEngine.XR.Interaction.Toolkit.DeactivateEventArgs), UnityEngineXRInteractionToolkitDeactivateEventArgsWrap.__Register);
+        
+        
+            translator.DelayWrapLoader(typeof(UnityEngine.XR.Interaction.Toolkit.Interactables.IXRInteractable), UnityEngineXRInteractionToolkitInteractablesIXRInteractableWrap.__Register);
+        
+        
+            translator.DelayWrapLoader(typeof(UnityEngine.XR.Interaction.Toolkit.Interactors.IXRInteractor), UnityEngineXRInteractionToolkitInteractorsIXRInteractorWrap.__Register);
+        
+        
+            translator.DelayWrapLoader(typeof(UnityEngine.XR.Interaction.Toolkit.Interactables.IXRSelectInteractable), UnityEngineXRInteractionToolkitInteractablesIXRSelectInteractableWrap.__Register);
+        
+        
+            translator.DelayWrapLoader(typeof(UnityEngine.XR.Interaction.Toolkit.Interactors.IXRSelectInteractor), UnityEngineXRInteractionToolkitInteractorsIXRSelectInteractorWrap.__Register);
+        
+        
+            translator.DelayWrapLoader(typeof(UnityEngine.XR.Interaction.Toolkit.Interactables.IXRActivateInteractable), UnityEngineXRInteractionToolkitInteractablesIXRActivateInteractableWrap.__Register);
+        
+        
+            translator.DelayWrapLoader(typeof(UnityEngine.XR.Interaction.Toolkit.Interactors.IXRActivateInteractor), UnityEngineXRInteractionToolkitInteractorsIXRActivateInteractorWrap.__Register);
+        
+        
+            translator.DelayWrapLoader(typeof(UnityEngine.XR.Interaction.Toolkit.Interactables.IXRFocusInteractable), UnityEngineXRInteractionToolkitInteractablesIXRFocusInteractableWrap.__Register);
+        
+        
+            translator.DelayWrapLoader(typeof(UnityEngine.XR.Interaction.Toolkit.Interactables.IXRHoverInteractable), UnityEngineXRInteractionToolkitInteractablesIXRHoverInteractableWrap.__Register);
+        
+        
+            translator.DelayWrapLoader(typeof(UnityEngine.XR.Interaction.Toolkit.Interactors.IXRHoverInteractor), UnityEngineXRInteractionToolkitInteractorsIXRHoverInteractorWrap.__Register);
+        
+        
+            translator.DelayWrapLoader(typeof(UnityEngine.XR.Interaction.Toolkit.Interactables.IXRInteractionStrengthInteractable), UnityEngineXRInteractionToolkitInteractablesIXRInteractionStrengthInteractableWrap.__Register);
+        
+        
+            translator.DelayWrapLoader(typeof(UnityEngine.XR.Interaction.Toolkit.Interactors.IXRInteractionStrengthInteractor), UnityEngineXRInteractionToolkitInteractorsIXRInteractionStrengthInteractorWrap.__Register);
+        
+        
+            translator.DelayWrapLoader(typeof(UnityEngine.XR.Interaction.Toolkit.XRInteractionManager), UnityEngineXRInteractionToolkitXRInteractionManagerWrap.__Register);
+        
+        
+            translator.DelayWrapLoader(typeof(UnityEngine.XR.Interaction.Toolkit.SelectEnterEvent), UnityEngineXRInteractionToolkitSelectEnterEventWrap.__Register);
+        
+        
+            translator.DelayWrapLoader(typeof(UnityEngine.XR.Interaction.Toolkit.SelectExitEvent), UnityEngineXRInteractionToolkitSelectExitEventWrap.__Register);
+        
+        
+            translator.DelayWrapLoader(typeof(TMPro.TMP_Text), TMProTMP_TextWrap.__Register);
+        
+        
+            translator.DelayWrapLoader(typeof(TMPro.TMP_Dropdown), TMProTMP_DropdownWrap.__Register);
+        
+        
+            translator.DelayWrapLoader(typeof(UnityEngine.UI.Button), UnityEngineUIButtonWrap.__Register);
+        
+        
+            translator.DelayWrapLoader(typeof(UnityEngine.UI.Slider), UnityEngineUISliderWrap.__Register);
+        
+        
+            translator.DelayWrapLoader(typeof(UnityEngine.Texture2D), UnityEngineTexture2DWrap.__Register);
+        
+        
+            translator.DelayWrapLoader(typeof(UnityEngine.Sprite), UnityEngineSpriteWrap.__Register);
+        
+        
             translator.DelayWrapLoader(typeof(UnityEngine.Mathf), UnityEngineMathfWrap.__Register);
         
         
@@ -140,6 +300,9 @@ namespace XLua.CSObjectWrap
         
         
             translator.DelayWrapLoader(typeof(UnityEngine.Debug), UnityEngineDebugWrap.__Register);
+        
+        
+            translator.DelayWrapLoader(typeof(ImmerzaSDK.Lua.LuaAsset), ImmerzaSDKLuaLuaAssetWrap.__Register);
         
         
             translator.DelayWrapLoader(typeof(ImmerzaSDK.BreathingDetection), ImmerzaSDKBreathingDetectionWrap.__Register);
@@ -154,6 +317,9 @@ namespace XLua.CSObjectWrap
             translator.DelayWrapLoader(typeof(ImmerzaSDK.Lua.LuaComponent), ImmerzaSDKLuaLuaComponentWrap.__Register);
         
         
+            translator.DelayWrapLoader(typeof(UnityEngine.WaitForSeconds), UnityEngineWaitForSecondsWrap.__Register);
+        
+        
         
         }
         
@@ -161,6 +327,8 @@ namespace XLua.CSObjectWrap
         {
             
             wrapInit0(luaenv, translator);
+            
+            wrapInit1(luaenv, translator);
             
             
             translator.AddInterfaceBridgeCreator(typeof(System.Collections.IEnumerator), SystemCollectionsIEnumeratorBridge.__Create);
