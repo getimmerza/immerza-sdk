@@ -139,6 +139,7 @@ end
 ## Things to check when exporting the scene:
 * Check that only one LuaManager instance is present in the scene
 * Subscribe to the OnPauseRequested event in the class ImmerzaEvents and provide a pause implementation
+* Have atleast one NearFarInteractor in one of the Hands/Controllers and set it to an unused XR Interaction Layer.
 #### Example:
 ```Lua
 function awake()
