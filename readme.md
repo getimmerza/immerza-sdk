@@ -1,5 +1,10 @@
 # immerza-sdk-package
 
+## Installation
+* Recommended: Add this repo as a submodule to your existing one
+* Download only the contents of the repo with the Download ZIP Button
+* **IMPORTANT: The folder should be inside the assets folder and have the name "Immerza"**
+
 ## Setup
 * Add a GameObject with an ImmerzaLuaManager component into your scene
 * After that you can add a LuaComponent to any GameObject you like and reference your Lua script, the fields you want to reference from within the scene and/or any assets you want to have available in your Lua script
@@ -103,6 +108,34 @@ function start()
 	end)
 end
 ```
+
+## Utility scripts
+* You can add additional scripts to your LuaComponents that will not share the same scripting environment as your component
+* They can then be imported via the 'require' statement in the Lua script
+#### Example:
+![image](Images/AdditionalScriptsExample.png)
+
+## Coroutines
+* To use coroutines, add the CSCoroutine.lua file from the Examples folder into your additional scripts in the LuaComponent
+#### Example:
+```Lua
+local unity = CS.UnityEngine
+
+local cs_coroutine = (require 'CSCoroutine')
+
+function play_effect()
+	particle:Play()
+	audio_source:Play()
+
+	cs_coroutine.start(self, function() -- can pass any function
+		coroutine.yield(CS.UnityEngine.WaitForSeconds(1))
+		unity.GameObject.Destroy(gameObject)
+	end)
+end
+```
+
+## 
+
 ## Things to check when exporting the scene:
 * Check that only one LuaManager instance is present in the scene
 * Subscribe to the OnPauseRequested event in the class ImmerzaEvents and provide a pause implementation
@@ -116,7 +149,7 @@ function on_pause_requested(shouldPause)
 	if shouldPause then
 		-- implement pause
 	else 
-		-- implement unpause
+		-- implement continue
 	end
 end
 ```
