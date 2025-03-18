@@ -35,7 +35,7 @@ function update()
 end
 ```
 ## C# and Unity Classes and Methods
-* You can access them via 'CS' and then the namespace + class and then your desired Method
+* You can access them via 'CS' and then the namespace + class and then your desired method
 * Objects that are instances of them can also be used, but some are restricted due to security reasons (namely UnityWebRequests, System.IO, etc...)
 #### Example
 ```lua
@@ -60,7 +60,7 @@ end
 ```
 ## Communication between scripts
 * You can use the Lua global environment to message between scripts
-* It is also to just directly get the LuaComponent and its scriptEnv to execute functions or access variables on the object
+* It is also possible to just directly get the LuaComponent and its scriptEnv to execute functions or access variables on the object
 #### Example:
 ```Lua
 obj:GetComponent("LuaComponent").scriptEnv.do_something()
