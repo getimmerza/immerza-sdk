@@ -1,7 +1,10 @@
 # immerza-sdk-package
 
 ## Installation
-* Recommended: Add this repo as a submodule to your existing one
+* **Recommended: Add this repo as a submodule to your existing one**
+* While in Assets folder:
+* -> git submodule add https://github.com/getimmerza/immerza-sdk.git
+* -> git mv immerza-sdk Immerza
 * Download only the contents of the repo with the Download ZIP Button
 * Add the Splines and XR Interaction Toolkit packages
 * **IMPORTANT: The folder should be inside the assets folder and have the name "Immerza"**
@@ -164,3 +167,6 @@ function start()
 	CS.ImmerzaSDK.ImmerzaEvents.EndScene()
 end
 ```
+
+## Full example project
+* [https://github.com/getimmerza/balloon-example-scene](https://github.com/getimmerza/balloon-example-scene)
