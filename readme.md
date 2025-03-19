@@ -3,6 +3,7 @@
 ## Installation
 * Recommended: Add this repo as a submodule to your existing one
 * Download only the contents of the repo with the Download ZIP Button
+* Add the Splines and XR Interaction Toolkit packages
 * **IMPORTANT: The folder should be inside the assets folder and have the name "Immerza"**
 
 ## Setup
