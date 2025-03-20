@@ -16,10 +16,6 @@ using UnityEngine.Video;
 using UnityEngine.VFX;
 using UnityEngine.Splines;
 using UnityEngine.InputSystem;
-using UnityEngine.XR.Interaction.Toolkit.Interactors;
-using UnityEngine.XR.Interaction.Toolkit.Transformers;
-using UnityEngine.XR.Interaction.Toolkit.Interactables;
-using UnityEngine.XR.Interaction.Toolkit;
 using ImmerzaSDK.Lua;
 using TMPro;
 using UnityEngine.UI;
@@ -73,44 +69,6 @@ public static class GenConfig
                 typeof(InputDevice),
                 typeof(InputActionType),
                 typeof(InputActionChange),
-                typeof(XRSocketInteractor),
-                typeof(XRSocketGrabTransformer),
-                typeof(XRSingleGrabFreeTransformer),
-                typeof(XRSelectInteractorExtensions),
-                typeof(XRRayInteractor),
-                typeof(XRPokeInteractor),
-                typeof(XRInteractorExtensions),
-                typeof(XRGeneralGrabTransformer),
-                typeof(XRBaseGrabTransformer),
-                typeof(XRBaseInputInteractor),
-                typeof(XRBaseInteractor),
-                typeof(XRDirectInteractor),
-                typeof(XRDualGrabFreeTransformer),
-                typeof(XRBaseInteractable),
-                typeof(XRGrabInteractable),
-                typeof(XRSimpleInteractable),
-                typeof(XRFocusInteractableExtensions),
-                typeof(XRHoverInteractableExtensions),
-                typeof(XRSelectInteractableExtensions),
-                typeof(SelectEnterEventArgs),
-                typeof(BaseInteractionEventArgs),
-                typeof(FocusExitEventArgs),
-                typeof(ActivateEventArgs),
-                typeof(DeactivateEventArgs),
-                typeof(IXRInteractable),
-                typeof(IXRInteractor),
-                typeof(IXRSelectInteractable),
-                typeof(IXRSelectInteractor),
-                typeof(IXRActivateInteractable),
-                typeof(IXRActivateInteractor),
-                typeof(IXRFocusInteractable),
-                typeof(IXRHoverInteractable),
-                typeof(IXRHoverInteractor),
-                typeof(IXRInteractionStrengthInteractable),
-                typeof(IXRInteractionStrengthInteractor),
-                typeof(XRInteractionManager),
-                typeof(SelectEnterEvent),
-                typeof(SelectExitEvent),
                 typeof(TMP_Text),
                 typeof(TMP_Dropdown),
                 typeof(Button),
