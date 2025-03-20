@@ -146,7 +146,6 @@
 		<type fullname="UnityEngine.XR.Interaction.Toolkit.Inputs.Readers.XRInputValueReader" preserve="all"/>
 		<type fullname="UnityEngine.XR.Interaction.Toolkit.Inputs.XRTransformStabilizer" preserve="all"/>
 		<type fullname="UnityEngine.XR.Interaction.Toolkit.ActivateEventArgs" preserve="all"/>
-		<type fullname="UnityEngine.XR.Interaction.Toolkit.Transformers.ARTransformer" preserve="all"/>
 		<type fullname="UnityEngine.XR.Interaction.Toolkit.Attachment.AttachPointVelocityTracker" preserve="all"/>
 		<type fullname="UnityEngine.XR.Interaction.Toolkit.Interactors.Casters.CurveInteractionCaster" preserve="all"/>
 		<type fullname="UnityEngine.XR.Interaction.Toolkit.Interactors.Visuals.CurveVisualController" preserve="all"/>

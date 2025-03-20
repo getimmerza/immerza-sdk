@@ -284,9 +284,6 @@ namespace XLua.CSObjectWrap
             translator.DelayWrapLoader(typeof(UnityEngine.XR.Interaction.Toolkit.ActivateEventArgs), UnityEngineXRInteractionToolkitActivateEventArgsWrap.__Register);
         
         
-            translator.DelayWrapLoader(typeof(UnityEngine.XR.Interaction.Toolkit.Transformers.ARTransformer), UnityEngineXRInteractionToolkitTransformersARTransformerWrap.__Register);
-        
-        
             translator.DelayWrapLoader(typeof(UnityEngine.XR.Interaction.Toolkit.Attachment.AttachPointVelocityTracker), UnityEngineXRInteractionToolkitAttachmentAttachPointVelocityTrackerWrap.__Register);
         
         
@@ -331,13 +328,13 @@ namespace XLua.CSObjectWrap
         
             translator.DelayWrapLoader(typeof(UnityEngine.XR.Interaction.Toolkit.Filtering.PokeThresholdDatum), UnityEngineXRInteractionToolkitFilteringPokeThresholdDatumWrap.__Register);
         
+        
+            translator.DelayWrapLoader(typeof(UnityEngine.XR.Interaction.Toolkit.Filtering.PokeThresholdDatumProperty), UnityEngineXRInteractionToolkitFilteringPokeThresholdDatumPropertyWrap.__Register);
+        
         }
         
         static void wrapInit2(LuaEnv luaenv, ObjectTranslator translator)
         {
-        
-            translator.DelayWrapLoader(typeof(UnityEngine.XR.Interaction.Toolkit.Filtering.PokeThresholdDatumProperty), UnityEngineXRInteractionToolkitFilteringPokeThresholdDatumPropertyWrap.__Register);
-        
         
             translator.DelayWrapLoader(typeof(UnityEngine.XR.Interaction.Toolkit.SelectEnterEventArgs), UnityEngineXRInteractionToolkitSelectEnterEventArgsWrap.__Register);
         
@@ -488,13 +485,13 @@ namespace XLua.CSObjectWrap
         
             translator.DelayWrapLoader(typeof(UnityEngine.XR.Interaction.Toolkit.Locomotion.XRBodyGroundPosition), UnityEngineXRInteractionToolkitLocomotionXRBodyGroundPositionWrap.__Register);
         
+        
+            translator.DelayWrapLoader(typeof(UnityEngine.XR.Interaction.Toolkit.Locomotion.XRBodyScale), UnityEngineXRInteractionToolkitLocomotionXRBodyScaleWrap.__Register);
+        
         }
         
         static void wrapInit3(LuaEnv luaenv, ObjectTranslator translator)
         {
-        
-            translator.DelayWrapLoader(typeof(UnityEngine.XR.Interaction.Toolkit.Locomotion.XRBodyScale), UnityEngineXRInteractionToolkitLocomotionXRBodyScaleWrap.__Register);
-        
         
             translator.DelayWrapLoader(typeof(UnityEngine.XR.Interaction.Toolkit.Locomotion.XRBodyTransformer), UnityEngineXRInteractionToolkitLocomotionXRBodyTransformerWrap.__Register);
         
