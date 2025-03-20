@@ -1,4 +1,4 @@
-# immerza-sdk-package
+# immerza-sdk
 
 ## Installation
 * **Recommended: Add this repo as a submodule to your existing one**
