@@ -6,7 +6,7 @@
 * -> git submodule add https://github.com/getimmerza/immerza-sdk.git
 * -> git mv immerza-sdk Immerza
 * Download only the contents of the repo with the Download ZIP Button
-* Add the Splines and XR Interaction Toolkit packages
+* Add the Splines (v2.7.2) and XR Interaction Toolkit (v3.0.7) packages
 * **IMPORTANT: The folder should be inside the assets folder and have the name "Immerza"**
 
 ## Setup
