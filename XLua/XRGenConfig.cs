@@ -79,7 +79,6 @@ public static class XRGenConfig
 
         // Interaction Start
         typeof(ActivateEventArgs),
-        typeof(ARTransformer),
         typeof(AttachPointVelocityTracker),
         typeof(CurveInteractionCaster),
         typeof(CurveVisualController),
