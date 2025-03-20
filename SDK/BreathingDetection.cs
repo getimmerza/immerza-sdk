@@ -41,7 +41,7 @@ namespace ImmerzaSDK
         public bool isStaticScene;
         public bool isFirstTimeRespiratory = true;
         private int velocityThreshold = 25;
-        private float maxHoldVelocity = 0.0020f;     // 0.005                                             // ----------- 29
+        //private float maxHoldVelocity = 0.0020f;     // 0.005                                             // ----------- 29
         private int holdFilter, inhaleFilter, exhaleFilter;
         private float currentPos, tempPosZ, tempPosY;
         private float sampleTime = 0.2f, time;                      // sampleTime = 0.2f
@@ -57,7 +57,7 @@ namespace ImmerzaSDK
         public float calculatedLastInhaleTime, calculatedLastExhaleTime, calculatedLastHoldTime;
 
         // breathCount/time 
-        private int lowBreath = 8, highBreath = 16;
+        //private int lowBreath = 8, highBreath = 16;
 
         public string breathAPI = "average";
 

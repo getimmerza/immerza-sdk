@@ -10,17 +10,20 @@ using System.Collections.Generic;
 [ScriptedImporter(1, "lua", AllowCaching = true)]
 public class LuaImporter : ScriptedImporter
 {
+    static Texture2D Thumbnail = null;
+
     public override void OnImportAsset(AssetImportContext ctx)
     {
-        string newAssetName = Path.GetFileName(ctx.assetPath);
+        if (Thumbnail == null)
+        {
+            Thumbnail = AssetDatabase.LoadAssetAtPath<Texture2D>("Assets/Immerza/SDK/Editor/Assets/LuaIcon.png");
+        }
+
         LuaAsset newAsset = ScriptableObject.CreateInstance<LuaAsset>();
         newAsset.content = File.ReadAllText(ctx.assetPath);
 
-        string iconPath = "Assets/Immerza/SDK/Editor/Assets/LuaIcon.png";
-        Texture2D icon = AssetDatabase.LoadAssetAtPath<Texture2D>(iconPath);
-        EditorGUIUtility.SetIconForObject(newAsset, icon);
-
-        ctx.AddObjectToAsset(newAssetName, newAsset);
+        string newAssetName = Path.GetFileName(ctx.assetPath);
+        ctx.AddObjectToAsset(newAssetName, newAsset, Thumbnail);
         ctx.SetMainObject(newAsset);
 
         TryIncludeLuaExtension();
@@ -28,9 +31,8 @@ public class LuaImporter : ScriptedImporter
 
     private static void TryIncludeLuaExtension()
     {
-        if (EditorSettings.projectGenerationUserExtensions.Contains("lua")) { return; }
-        List<string> list = EditorSettings.projectGenerationUserExtensions.ToList();
-        list.Add("lua");
-        EditorSettings.projectGenerationUserExtensions = list.ToArray();
+        if (!EditorSettings.projectGenerationUserExtensions.Contains("lua")) {
+            EditorSettings.projectGenerationUserExtensions = EditorSettings.projectGenerationUserExtensions.Concat(new[] { "lua" }).ToArray();
+        }
     }
 }
