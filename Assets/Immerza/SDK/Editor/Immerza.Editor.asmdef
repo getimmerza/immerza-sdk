@@ -2,7 +2,8 @@
     "name": "Immerza.Editor",
     "rootNamespace": "",
     "references": [
-        "GUID:d1e67298034945349a21ce60683ad7fa"
+        "GUID:d1e67298034945349a21ce60683ad7fa",
+        "GUID:7746ddcf3fd10af4993e8cc61c291d53"
     ],
     "includePlatforms": [
         "Editor"
