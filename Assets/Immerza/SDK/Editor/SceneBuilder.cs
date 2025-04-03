@@ -106,10 +106,8 @@ internal class SceneBuilder : ScriptableObject, ISceneBuilder
 
             sceneMetadata.platforms.Add(new PlatformInfo(platformId, crc));
 
-#if BUILD_BUNDLE
             File.Delete(Path.Combine(bundleDir, "immerza_scene"));
             File.Delete(Path.Combine(bundleDir, "immerza_assets"));
-#endif
         }
         catch (Exception exc)
         {
