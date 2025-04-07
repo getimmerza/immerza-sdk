@@ -23,43 +23,45 @@ internal class SceneBuilder : ScriptableObject, ISceneBuilder
 
     public bool ExportScene(ExportSettings exportSettings)
     {
+        Log.LogInfo($"Start exporting scene {exportSettings.SceneToExport.name}", LogChannelType.SDK);
+
         ImmerzaUtil.InitCrcTable();
 
         EditorSceneManager.OpenScene(AssetDatabase.GetAssetPath(exportSettings.SceneToExport));
 
         string bundleDir = Path.Combine(Path.GetDirectoryName(Application.dataPath), exportSettings.ExportFolder);
-
-        SceneMetadata sceneMetadata = new();
-        AssetMetadata assetMetadata = new();
-
-        List<string> assetPaths = new();
-
+        Log.LogInfo($"\tExport target {bundleDir}", LogChannelType.SDKManager);
         if (!Directory.Exists(bundleDir))
         {
             Directory.CreateDirectory(bundleDir);
         }
 
         string scenePath = SceneManager.GetActiveScene().path;
-
+        AssetMetadata assetMetadata = new();
+        List<string> assetPaths = new();
         assetMetadata.AddAsset("ImmerzaScene", scenePath);
 
         ImmerzaUtil.AddAssetPath(assetPaths, AssetDatabase.GetAssetPath(_dummyFile));
         assetMetadata.AddAsset("Gen", "NONE");
 
         AssetBundleBuild[] exportMap = new AssetBundleBuild[2];
-
         exportMap[0].assetBundleName = "immerza_scene";
         exportMap[0].assetNames = new[] { scenePath };
-
         exportMap[1].assetBundleName = "immerza_assets";
         exportMap[1].assetNames = assetPaths.ToArray();
 
+        SceneMetadata sceneMetadata = new();
         sceneMetadata.sdkVersion = AssetDatabase.LoadAssetAtPath<TextAsset>("Assets/Immerza/Version.txt").ToString();
 
         bool bundlesCreated = true;
         bundlesCreated  = ExportBundles(exportSettings, bundleDir, exportMap, sceneMetadata, assetMetadata, BuildTarget.Android);
         bundlesCreated &= ExportBundles(exportSettings, bundleDir, exportMap, sceneMetadata, assetMetadata, BuildTarget.StandaloneWindows64);
         sceneMetadata.SaveMetaData(Path.Combine(bundleDir, "immerza_metadata.json"));
+
+        if (bundlesCreated)
+            Log.LogInfo("\tFinished successfully", LogChannelType.SDKManager);
+        else
+            Log.LogWarning("\tFailed", LogChannelType.SDKManager);
 
         return bundlesCreated;
     }
@@ -72,6 +74,8 @@ internal class SceneBuilder : ScriptableObject, ISceneBuilder
         string platformId = platform == BuildTarget.Android ? "android" : "win";
 
         sceneMetadata.isUsingBgMusic = UnityEngine.Object.FindAnyObjectByType<BackgroundAudio>(FindObjectsInactive.Include) != null;
+
+        Log.LogInfo($"\tExport bundle for {platformId}...", LogChannelType.SDK);
 
         try
         {
@@ -111,8 +115,9 @@ internal class SceneBuilder : ScriptableObject, ISceneBuilder
         }
         catch (Exception exc)
         {
-            System.IO.DirectoryInfo di = new(bundleDir);
+            Log.LogError($"\t...failed with {exc.Message}", LogChannelType.SDK);
 
+            System.IO.DirectoryInfo di = new(bundleDir);
             foreach (FileInfo file in di.EnumerateFiles())
             {
                 file.Delete();
@@ -122,10 +127,10 @@ internal class SceneBuilder : ScriptableObject, ISceneBuilder
                 dir.Delete(true);
             }
 
-            UnityEngine.Debug.LogException(exc);
-
             return false;
         }
+
+        Log.LogInfo($"\t...done", LogChannelType.SDK);
 
         return true;
     }
