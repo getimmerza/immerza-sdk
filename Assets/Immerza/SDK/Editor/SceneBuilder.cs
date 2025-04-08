@@ -21,14 +21,27 @@ internal class SceneBuilder : ScriptableObject, ISceneBuilder
     [SerializeField]
     private TextAsset _dummyFile = null;
 
-    public bool ExportScene(ExportSettings exportSettings)
+    public bool PrepareForExport(ExportSettings exportSettings)
     {
         Log.LogInfo($"Start exporting scene {exportSettings.SceneToExport.name}", LogChannelType.SDK);
 
         ImmerzaUtil.InitCrcTable();
 
-        EditorSceneManager.OpenScene(AssetDatabase.GetAssetPath(exportSettings.SceneToExport));
+        try
+        {
+            EditorSceneManager.OpenScene(AssetDatabase.GetAssetPath(exportSettings.SceneToExport));
+        }
+        catch (ArgumentException e)
+        {
+            Log.LogError($"Failed to open export scene with {e.Message}", LogChannelType.SDK);
+            return false;
+        }
 
+        return true;
+    }
+
+    public bool ExportScene(ExportSettings exportSettings)
+    {
         string bundleDir = Path.Combine(Path.GetDirectoryName(Application.dataPath), exportSettings.ExportFolder);
         Log.LogInfo($"\tExport target {bundleDir}", LogChannelType.SDKManager);
         if (!Directory.Exists(bundleDir))
@@ -38,9 +51,9 @@ internal class SceneBuilder : ScriptableObject, ISceneBuilder
 
         string scenePath = SceneManager.GetActiveScene().path;
         AssetMetadata assetMetadata = new();
-        List<string> assetPaths = new();
         assetMetadata.AddAsset("ImmerzaScene", scenePath);
 
+        List<string> assetPaths = new();
         ImmerzaUtil.AddAssetPath(assetPaths, AssetDatabase.GetAssetPath(_dummyFile));
         assetMetadata.AddAsset("Gen", "NONE");
 
