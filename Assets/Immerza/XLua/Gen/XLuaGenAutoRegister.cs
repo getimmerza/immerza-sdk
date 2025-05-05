@@ -109,6 +109,15 @@ namespace XLua.CSObjectWrap
             translator.DelayWrapLoader(typeof(UnityEngine.MeshCollider), UnityEngineMeshColliderWrap.__Register);
         
         
+            translator.DelayWrapLoader(typeof(UnityEngine.Physics), UnityEnginePhysicsWrap.__Register);
+        
+        
+            translator.DelayWrapLoader(typeof(UnityEngine.LayerMask), UnityEngineLayerMaskWrap.__Register);
+        
+        
+            translator.DelayWrapLoader(typeof(UnityEngine.ConfigurableJoint), UnityEngineConfigurableJointWrap.__Register);
+        
+        
             translator.DelayWrapLoader(typeof(UnityEngine.Material), UnityEngineMaterialWrap.__Register);
         
         
@@ -165,6 +174,10 @@ namespace XLua.CSObjectWrap
         
             translator.DelayWrapLoader(typeof(UnityEngine.UI.Button), UnityEngineUIButtonWrap.__Register);
         
+        }
+        
+        static void wrapInit1(LuaEnv luaenv, ObjectTranslator translator)
+        {
         
             translator.DelayWrapLoader(typeof(UnityEngine.UI.Slider), UnityEngineUISliderWrap.__Register);
         
@@ -174,10 +187,6 @@ namespace XLua.CSObjectWrap
         
             translator.DelayWrapLoader(typeof(UnityEngine.Sprite), UnityEngineSpriteWrap.__Register);
         
-        }
-        
-        static void wrapInit1(LuaEnv luaenv, ObjectTranslator translator)
-        {
         
             translator.DelayWrapLoader(typeof(UnityEngine.Mathf), UnityEngineMathfWrap.__Register);
         
@@ -189,6 +198,42 @@ namespace XLua.CSObjectWrap
         
         
             translator.DelayWrapLoader(typeof(ImmerzaSDK.Lua.LuaAsset), ImmerzaSDKLuaLuaAssetWrap.__Register);
+        
+        
+            translator.DelayWrapLoader(typeof(UnityEngine.AI.NavMesh), UnityEngineAINavMeshWrap.__Register);
+        
+        
+            translator.DelayWrapLoader(typeof(UnityEngine.AI.NavMeshAgent), UnityEngineAINavMeshAgentWrap.__Register);
+        
+        
+            translator.DelayWrapLoader(typeof(UnityEngine.AI.NavMeshObstacle), UnityEngineAINavMeshObstacleWrap.__Register);
+        
+        
+            translator.DelayWrapLoader(typeof(UnityEngine.AI.NavMeshPath), UnityEngineAINavMeshPathWrap.__Register);
+        
+        
+            translator.DelayWrapLoader(typeof(UnityEngine.AI.NavMeshHit), UnityEngineAINavMeshHitWrap.__Register);
+        
+        
+            translator.DelayWrapLoader(typeof(UnityEngine.AI.NavMeshData), UnityEngineAINavMeshDataWrap.__Register);
+        
+        
+            translator.DelayWrapLoader(typeof(UnityEngine.AI.NavMeshDataInstance), UnityEngineAINavMeshDataInstanceWrap.__Register);
+        
+        
+            translator.DelayWrapLoader(typeof(UnityEngine.AI.NavMeshLinkData), UnityEngineAINavMeshLinkDataWrap.__Register);
+        
+        
+            translator.DelayWrapLoader(typeof(UnityEngine.AI.NavMeshLinkInstance), UnityEngineAINavMeshLinkInstanceWrap.__Register);
+        
+        
+            translator.DelayWrapLoader(typeof(UnityEngine.AI.NavMeshBuildSettings), UnityEngineAINavMeshBuildSettingsWrap.__Register);
+        
+        
+            translator.DelayWrapLoader(typeof(UnityEngine.AI.NavMeshBuildSource), UnityEngineAINavMeshBuildSourceWrap.__Register);
+        
+        
+            translator.DelayWrapLoader(typeof(UnityEngine.AI.NavMeshBuildMarkup), UnityEngineAINavMeshBuildMarkupWrap.__Register);
         
         
             translator.DelayWrapLoader(typeof(UnityEngine.XR.Interaction.Toolkit.Feedback.SimpleAudioFeedback), UnityEngineXRInteractionToolkitFeedbackSimpleAudioFeedbackWrap.__Register);
@@ -286,6 +331,10 @@ namespace XLua.CSObjectWrap
         
             translator.DelayWrapLoader(typeof(UnityEngine.XR.Interaction.Toolkit.Attachment.AttachPointVelocityTracker), UnityEngineXRInteractionToolkitAttachmentAttachPointVelocityTrackerWrap.__Register);
         
+        }
+        
+        static void wrapInit2(LuaEnv luaenv, ObjectTranslator translator)
+        {
         
             translator.DelayWrapLoader(typeof(UnityEngine.XR.Interaction.Toolkit.Interactors.Casters.CurveInteractionCaster), UnityEngineXRInteractionToolkitInteractorsCastersCurveInteractionCasterWrap.__Register);
         
@@ -331,10 +380,6 @@ namespace XLua.CSObjectWrap
         
             translator.DelayWrapLoader(typeof(UnityEngine.XR.Interaction.Toolkit.Filtering.PokeThresholdDatumProperty), UnityEngineXRInteractionToolkitFilteringPokeThresholdDatumPropertyWrap.__Register);
         
-        }
-        
-        static void wrapInit2(LuaEnv luaenv, ObjectTranslator translator)
-        {
         
             translator.DelayWrapLoader(typeof(UnityEngine.XR.Interaction.Toolkit.SelectEnterEventArgs), UnityEngineXRInteractionToolkitSelectEnterEventArgsWrap.__Register);
         
@@ -443,6 +488,10 @@ namespace XLua.CSObjectWrap
         
             translator.DelayWrapLoader(typeof(UnityEngine.XR.Interaction.Toolkit.Locomotion.LocomotionMediator), UnityEngineXRInteractionToolkitLocomotionLocomotionMediatorWrap.__Register);
         
+        }
+        
+        static void wrapInit3(LuaEnv luaenv, ObjectTranslator translator)
+        {
         
             translator.DelayWrapLoader(typeof(UnityEngine.XR.Interaction.Toolkit.Locomotion.Comfort.LocomotionVignetteProvider), UnityEngineXRInteractionToolkitLocomotionComfortLocomotionVignetteProviderWrap.__Register);
         
@@ -488,10 +537,6 @@ namespace XLua.CSObjectWrap
         
             translator.DelayWrapLoader(typeof(UnityEngine.XR.Interaction.Toolkit.Locomotion.XRBodyScale), UnityEngineXRInteractionToolkitLocomotionXRBodyScaleWrap.__Register);
         
-        }
-        
-        static void wrapInit3(LuaEnv luaenv, ObjectTranslator translator)
-        {
         
             translator.DelayWrapLoader(typeof(UnityEngine.XR.Interaction.Toolkit.Locomotion.XRBodyTransformer), UnityEngineXRInteractionToolkitLocomotionXRBodyTransformerWrap.__Register);
         
