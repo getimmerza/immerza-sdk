@@ -1,8 +1,9 @@
-using ImmerzaSDK.Lua;
+﻿using ImmerzaSDK.Lua;
 using ImmerzaSDK.Manager.Editor;
 using System.Collections.Generic;
 using System.Reflection;
 using UnityEditor;
+using UnityEditor.UIElements;
 using UnityEngine;
 
 public static class LuaScriptDragAndDrop
@@ -25,10 +26,15 @@ public static class LuaScriptDragAndDrop
             return DragAndDropVisualMode.None;
         }
 
-        LuaAsset luaAsset = new();
+        LuaAsset luaAsset = null;
         foreach (Object item in DragAndDrop.objectReferences)
         {
-            if (item is LuaAsset scriptableObject)
+            Debug.Log(item.GetType().Name + " " + typeof(LuaAsset));
+            if (item.GetType() != typeof(LuaAsset))
+            {
+                break;
+            }
+            else if (item is LuaAsset scriptableObject)
             {
                 luaAsset = scriptableObject;
                 break;
