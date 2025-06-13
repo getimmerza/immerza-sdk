@@ -9,16 +9,16 @@ namespace ImmerzaSDK.Settings
     public enum LaunchOptionValueType { Int, Float, String, Bool }
 
     [Serializable, LuaCallCSharp]
-    public class LaunchOption
+    public class AdvancedLaunchOption
     {
         public string id;
         public string name;
-        public List<LaunchOptionValue> variables;
+        public List<AdvancedLaunchOptionValue> variables;
         [Multiline] public string description;
     }
 
     [Serializable, LuaCallCSharp]
-    public class LaunchOptionValue
+    public class AdvancedLaunchOptionValue
     {
         public string name;
         public LaunchOptionValueType type;

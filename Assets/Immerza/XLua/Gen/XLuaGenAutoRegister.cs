@@ -236,6 +236,9 @@ namespace XLua.CSObjectWrap
             translator.DelayWrapLoader(typeof(UnityEngine.AI.NavMeshBuildMarkup), UnityEngineAINavMeshBuildMarkupWrap.__Register);
         
         
+            translator.DelayWrapLoader(typeof(System.Collections.Generic.Dictionary<string, object>), SystemCollectionsGenericDictionary_2_SystemStringSystemObject_Wrap.__Register);
+        
+        
             translator.DelayWrapLoader(typeof(UnityEngine.XR.Interaction.Toolkit.Feedback.SimpleAudioFeedback), UnityEngineXRInteractionToolkitFeedbackSimpleAudioFeedbackWrap.__Register);
         
         
@@ -328,13 +331,13 @@ namespace XLua.CSObjectWrap
         
             translator.DelayWrapLoader(typeof(UnityEngine.XR.Interaction.Toolkit.ActivateEventArgs), UnityEngineXRInteractionToolkitActivateEventArgsWrap.__Register);
         
-        
-            translator.DelayWrapLoader(typeof(UnityEngine.XR.Interaction.Toolkit.Attachment.AttachPointVelocityTracker), UnityEngineXRInteractionToolkitAttachmentAttachPointVelocityTrackerWrap.__Register);
-        
         }
         
         static void wrapInit2(LuaEnv luaenv, ObjectTranslator translator)
         {
+        
+            translator.DelayWrapLoader(typeof(UnityEngine.XR.Interaction.Toolkit.Attachment.AttachPointVelocityTracker), UnityEngineXRInteractionToolkitAttachmentAttachPointVelocityTrackerWrap.__Register);
+        
         
             translator.DelayWrapLoader(typeof(UnityEngine.XR.Interaction.Toolkit.Interactors.Casters.CurveInteractionCaster), UnityEngineXRInteractionToolkitInteractorsCastersCurveInteractionCasterWrap.__Register);
         
@@ -485,13 +488,13 @@ namespace XLua.CSObjectWrap
         
             translator.DelayWrapLoader(typeof(UnityEngine.XR.Interaction.Toolkit.Locomotion.Teleportation.GazeTeleportationAnchorFilter), UnityEngineXRInteractionToolkitLocomotionTeleportationGazeTeleportationAnchorFilterWrap.__Register);
         
-        
-            translator.DelayWrapLoader(typeof(UnityEngine.XR.Interaction.Toolkit.Locomotion.LocomotionMediator), UnityEngineXRInteractionToolkitLocomotionLocomotionMediatorWrap.__Register);
-        
         }
         
         static void wrapInit3(LuaEnv luaenv, ObjectTranslator translator)
         {
+        
+            translator.DelayWrapLoader(typeof(UnityEngine.XR.Interaction.Toolkit.Locomotion.LocomotionMediator), UnityEngineXRInteractionToolkitLocomotionLocomotionMediatorWrap.__Register);
+        
         
             translator.DelayWrapLoader(typeof(UnityEngine.XR.Interaction.Toolkit.Locomotion.Comfort.LocomotionVignetteProvider), UnityEngineXRInteractionToolkitLocomotionComfortLocomotionVignetteProviderWrap.__Register);
         
@@ -569,6 +572,39 @@ namespace XLua.CSObjectWrap
         
         
             translator.DelayWrapLoader(typeof(ImmerzaSDK.MultipathContainer), ImmerzaSDKMultipathContainerWrap.__Register);
+        
+        
+            translator.DelayWrapLoader(typeof(ImmerzaSDK.Wrappers.NeckDataService), ImmerzaSDKWrappersNeckDataServiceWrap.__Register);
+        
+        
+            translator.DelayWrapLoader(typeof(ImmerzaSDK.Wrappers.NeckDataWrapper), ImmerzaSDKWrappersNeckDataWrapperWrap.__Register);
+        
+        
+            translator.DelayWrapLoader(typeof(ImmerzaSDK.Wrappers.Subject), ImmerzaSDKWrappersSubjectWrap.__Register);
+        
+        
+            translator.DelayWrapLoader(typeof(ImmerzaSDK.Wrappers.Device), ImmerzaSDKWrappersDeviceWrap.__Register);
+        
+        
+            translator.DelayWrapLoader(typeof(ImmerzaSDK.Wrappers.Component), ImmerzaSDKWrappersComponentWrap.__Register);
+        
+        
+            translator.DelayWrapLoader(typeof(ImmerzaSDK.Wrappers.Measurement), ImmerzaSDKWrappersMeasurementWrap.__Register);
+        
+        
+            translator.DelayWrapLoader(typeof(ImmerzaSDK.Settings.AdvancedLaunchOptions), ImmerzaSDKSettingsAdvancedLaunchOptionsWrap.__Register);
+        
+        
+            translator.DelayWrapLoader(typeof(ImmerzaSDK.Settings.LaunchOptionValueType), ImmerzaSDKSettingsLaunchOptionValueTypeWrap.__Register);
+        
+        
+            translator.DelayWrapLoader(typeof(ImmerzaSDK.Settings.AdvancedLaunchOption), ImmerzaSDKSettingsAdvancedLaunchOptionWrap.__Register);
+        
+        
+            translator.DelayWrapLoader(typeof(ImmerzaSDK.Settings.AdvancedLaunchOptionValue), ImmerzaSDKSettingsAdvancedLaunchOptionValueWrap.__Register);
+        
+        
+            translator.DelayWrapLoader(typeof(ImmerzaSDK.Settings.LaunchOptions), ImmerzaSDKSettingsLaunchOptionsWrap.__Register);
         
         
             translator.DelayWrapLoader(typeof(ImmerzaSDK.Lua.LuaComponent), ImmerzaSDKLuaLuaComponentWrap.__Register);

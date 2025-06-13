@@ -100,6 +100,7 @@ public static class GenConfig
                 typeof(NavMeshBuildSettings),
                 typeof(NavMeshBuildSource),
                 typeof(NavMeshBuildMarkup),
+                typeof(Dictionary<string, object>)
             };
 
     [CSharpCallLua]

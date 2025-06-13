@@ -1,4 +1,4 @@
-using ImmerzaSDK.Lua;
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 using XLua;
@@ -9,20 +9,15 @@ namespace ImmerzaSDK.Settings
     public class LaunchOptions : MonoBehaviour
     {
         public static LaunchOptions Instance { get; private set; }
+        public static event Action<Dictionary<string, object>> OnLaunchOptionsReceived;
 
-        public static List<LaunchOption> options = new()
+        public Dictionary<string, object> Options = new();
+
+        public void Init(Dictionary<string, object> options)
         {
-            new LaunchOption()
-            {
-                id = "default",
-                name = "Default",
-                variables = new List<LaunchOptionValue>()
-                {
-                    new() { name = "duration", type = LaunchOptionValueType.Float, floatValue = 0.0f }
-                },
-                description = "Default preset if none is created.",
-            }
-        };
+            Options = options;
+            OnLaunchOptionsReceived?.Invoke(Options);
+        }
 
         private void Awake()
         {
