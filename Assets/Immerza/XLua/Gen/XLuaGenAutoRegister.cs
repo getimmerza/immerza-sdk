@@ -200,6 +200,9 @@ namespace XLua.CSObjectWrap
             translator.DelayWrapLoader(typeof(ImmerzaSDK.Lua.LuaAsset), ImmerzaSDKLuaLuaAssetWrap.__Register);
         
         
+            translator.DelayWrapLoader(typeof(ImmerzaSDK.Shared.NeckDataWrapper), ImmerzaSDKSharedNeckDataWrapperWrap.__Register);
+        
+        
             translator.DelayWrapLoader(typeof(UnityEngine.AI.NavMesh), UnityEngineAINavMeshWrap.__Register);
         
         
@@ -328,13 +331,13 @@ namespace XLua.CSObjectWrap
         
             translator.DelayWrapLoader(typeof(UnityEngine.XR.Interaction.Toolkit.Inputs.XRTransformStabilizer), UnityEngineXRInteractionToolkitInputsXRTransformStabilizerWrap.__Register);
         
-        
-            translator.DelayWrapLoader(typeof(UnityEngine.XR.Interaction.Toolkit.ActivateEventArgs), UnityEngineXRInteractionToolkitActivateEventArgsWrap.__Register);
-        
         }
         
         static void wrapInit2(LuaEnv luaenv, ObjectTranslator translator)
         {
+        
+            translator.DelayWrapLoader(typeof(UnityEngine.XR.Interaction.Toolkit.ActivateEventArgs), UnityEngineXRInteractionToolkitActivateEventArgsWrap.__Register);
+        
         
             translator.DelayWrapLoader(typeof(UnityEngine.XR.Interaction.Toolkit.Attachment.AttachPointVelocityTracker), UnityEngineXRInteractionToolkitAttachmentAttachPointVelocityTrackerWrap.__Register);
         
@@ -485,13 +488,13 @@ namespace XLua.CSObjectWrap
         
             translator.DelayWrapLoader(typeof(UnityEngine.XR.Interaction.Toolkit.Locomotion.Teleportation.FurthestTeleportationAnchorFilter), UnityEngineXRInteractionToolkitLocomotionTeleportationFurthestTeleportationAnchorFilterWrap.__Register);
         
-        
-            translator.DelayWrapLoader(typeof(UnityEngine.XR.Interaction.Toolkit.Locomotion.Teleportation.GazeTeleportationAnchorFilter), UnityEngineXRInteractionToolkitLocomotionTeleportationGazeTeleportationAnchorFilterWrap.__Register);
-        
         }
         
         static void wrapInit3(LuaEnv luaenv, ObjectTranslator translator)
         {
+        
+            translator.DelayWrapLoader(typeof(UnityEngine.XR.Interaction.Toolkit.Locomotion.Teleportation.GazeTeleportationAnchorFilter), UnityEngineXRInteractionToolkitLocomotionTeleportationGazeTeleportationAnchorFilterWrap.__Register);
+        
         
             translator.DelayWrapLoader(typeof(UnityEngine.XR.Interaction.Toolkit.Locomotion.LocomotionMediator), UnityEngineXRInteractionToolkitLocomotionLocomotionMediatorWrap.__Register);
         
@@ -575,21 +578,6 @@ namespace XLua.CSObjectWrap
         
         
             translator.DelayWrapLoader(typeof(ImmerzaSDK.Wrappers.NeckDataService), ImmerzaSDKWrappersNeckDataServiceWrap.__Register);
-        
-        
-            translator.DelayWrapLoader(typeof(ImmerzaSDK.Wrappers.NeckDataWrapper), ImmerzaSDKWrappersNeckDataWrapperWrap.__Register);
-        
-        
-            translator.DelayWrapLoader(typeof(ImmerzaSDK.Wrappers.Subject), ImmerzaSDKWrappersSubjectWrap.__Register);
-        
-        
-            translator.DelayWrapLoader(typeof(ImmerzaSDK.Wrappers.Device), ImmerzaSDKWrappersDeviceWrap.__Register);
-        
-        
-            translator.DelayWrapLoader(typeof(ImmerzaSDK.Wrappers.Component), ImmerzaSDKWrappersComponentWrap.__Register);
-        
-        
-            translator.DelayWrapLoader(typeof(ImmerzaSDK.Wrappers.Measurement), ImmerzaSDKWrappersMeasurementWrap.__Register);
         
         
             translator.DelayWrapLoader(typeof(ImmerzaSDK.Settings.AdvancedLaunchOptions), ImmerzaSDKSettingsAdvancedLaunchOptionsWrap.__Register);

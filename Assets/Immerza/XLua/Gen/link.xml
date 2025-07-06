@@ -115,17 +115,17 @@
 		<type fullname="ImmerzaSDK.ImmerzaEvents" preserve="all"/>
 		<type fullname="ImmerzaSDK.MultipathContainer" preserve="all"/>
 		<type fullname="ImmerzaSDK.Wrappers.NeckDataService" preserve="all"/>
-		<type fullname="ImmerzaSDK.Wrappers.NeckDataWrapper" preserve="all"/>
-		<type fullname="ImmerzaSDK.Wrappers.Subject" preserve="all"/>
-		<type fullname="ImmerzaSDK.Wrappers.Device" preserve="all"/>
-		<type fullname="ImmerzaSDK.Wrappers.Component" preserve="all"/>
-		<type fullname="ImmerzaSDK.Wrappers.Measurement" preserve="all"/>
 		<type fullname="ImmerzaSDK.Settings.AdvancedLaunchOptions" preserve="all"/>
 		<type fullname="ImmerzaSDK.Settings.LaunchOptionValueType" preserve="all"/>
 		<type fullname="ImmerzaSDK.Settings.AdvancedLaunchOption" preserve="all"/>
 		<type fullname="ImmerzaSDK.Settings.AdvancedLaunchOptionValue" preserve="all"/>
 		<type fullname="ImmerzaSDK.Settings.LaunchOptions" preserve="all"/>
 		<type fullname="ImmerzaSDK.Lua.LuaComponent" preserve="all"/>
+		
+	</assembly>
+
+	<assembly fullname="ImmerzaSDK.Shared">
+	    <type fullname="ImmerzaSDK.Shared.NeckDataWrapper" preserve="all"/>
 		
 	</assembly>
 

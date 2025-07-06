@@ -66,7 +66,7 @@ namespace XLua.CSObjectWrap
             
                 
                 {
-                    ImmerzaSDK.Wrappers.NeckDataWrapper _data = (ImmerzaSDK.Wrappers.NeckDataWrapper)translator.GetObject(L, 1, typeof(ImmerzaSDK.Wrappers.NeckDataWrapper));
+                    ImmerzaSDK.Shared.NeckDataWrapper _data = (ImmerzaSDK.Shared.NeckDataWrapper)translator.GetObject(L, 1, typeof(ImmerzaSDK.Shared.NeckDataWrapper));
                     
                     ImmerzaSDK.Wrappers.NeckDataService.SendNeckData( _data );
                     
