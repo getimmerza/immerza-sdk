@@ -60,6 +60,10 @@ namespace CSObjectWrapEditor
                 }
             }
         }
+
+        public class UserConfig
+        {
+        }
     }
 
     public struct CustomGenTask
