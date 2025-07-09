@@ -180,4 +180,74 @@ namespace XLua.CSObjectWrap
 		}
 	}
     
+    public class ImmerzaSDKSettingsLaunchOptionValueTypeWrap
+    {
+		public static void __Register(RealStatePtr L)
+        {
+		    ObjectTranslator translator = ObjectTranslatorPool.Instance.Find(L);
+		    Utils.BeginObjectRegister(typeof(ImmerzaSDK.Settings.LaunchOptionValueType), L, translator, 0, 0, 0, 0);
+			Utils.EndObjectRegister(typeof(ImmerzaSDK.Settings.LaunchOptionValueType), L, translator, null, null, null, null, null);
+			
+			Utils.BeginClassRegister(typeof(ImmerzaSDK.Settings.LaunchOptionValueType), L, null, 5, 0, 0);
+
+            
+            Utils.RegisterObject(L, translator, Utils.CLS_IDX, "Int", ImmerzaSDK.Settings.LaunchOptionValueType.Int);
+            
+            Utils.RegisterObject(L, translator, Utils.CLS_IDX, "Float", ImmerzaSDK.Settings.LaunchOptionValueType.Float);
+            
+            Utils.RegisterObject(L, translator, Utils.CLS_IDX, "String", ImmerzaSDK.Settings.LaunchOptionValueType.String);
+            
+            Utils.RegisterObject(L, translator, Utils.CLS_IDX, "Bool", ImmerzaSDK.Settings.LaunchOptionValueType.Bool);
+            
+
+			Utils.RegisterFunc(L, Utils.CLS_IDX, "__CastFrom", __CastFrom);
+            
+            Utils.EndClassRegister(typeof(ImmerzaSDK.Settings.LaunchOptionValueType), L, translator);
+        }
+		
+		[MonoPInvokeCallbackAttribute(typeof(LuaCSFunction))]
+        static int __CastFrom(RealStatePtr L)
+		{
+			ObjectTranslator translator = ObjectTranslatorPool.Instance.Find(L);
+			LuaTypes lua_type = LuaAPI.lua_type(L, 1);
+            if (lua_type == LuaTypes.LUA_TNUMBER)
+            {
+                translator.PushImmerzaSDKSettingsLaunchOptionValueType(L, (ImmerzaSDK.Settings.LaunchOptionValueType)LuaAPI.xlua_tointeger(L, 1));
+            }
+			
+            else if(lua_type == LuaTypes.LUA_TSTRING)
+            {
+
+			    if (LuaAPI.xlua_is_eq_str(L, 1, "Int"))
+                {
+                    translator.PushImmerzaSDKSettingsLaunchOptionValueType(L, ImmerzaSDK.Settings.LaunchOptionValueType.Int);
+                }
+				else if (LuaAPI.xlua_is_eq_str(L, 1, "Float"))
+                {
+                    translator.PushImmerzaSDKSettingsLaunchOptionValueType(L, ImmerzaSDK.Settings.LaunchOptionValueType.Float);
+                }
+				else if (LuaAPI.xlua_is_eq_str(L, 1, "String"))
+                {
+                    translator.PushImmerzaSDKSettingsLaunchOptionValueType(L, ImmerzaSDK.Settings.LaunchOptionValueType.String);
+                }
+				else if (LuaAPI.xlua_is_eq_str(L, 1, "Bool"))
+                {
+                    translator.PushImmerzaSDKSettingsLaunchOptionValueType(L, ImmerzaSDK.Settings.LaunchOptionValueType.Bool);
+                }
+				else
+                {
+                    return LuaAPI.luaL_error(L, "invalid string for ImmerzaSDK.Settings.LaunchOptionValueType!");
+                }
+
+            }
+			
+            else
+            {
+                return LuaAPI.luaL_error(L, "invalid lua type for ImmerzaSDK.Settings.LaunchOptionValueType! Expect number or string, got + " + lua_type);
+            }
+
+            return 1;
+		}
+	}
+    
 }

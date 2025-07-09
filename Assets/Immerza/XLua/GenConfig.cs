@@ -20,6 +20,7 @@ using ImmerzaSDK.Lua;
 using TMPro;
 using UnityEngine.UI;
 using UnityEngine.AI;
+using ImmerzaSDK.Shared;
 
 public static class GenConfig
 {
@@ -85,6 +86,7 @@ public static class GenConfig
                 typeof(Action),
                 typeof(UnityEngine.Debug),
                 typeof(LuaAsset),
+                typeof(NeckDataWrapper),
 
                 // Navigation
 
@@ -100,6 +102,7 @@ public static class GenConfig
                 typeof(NavMeshBuildSettings),
                 typeof(NavMeshBuildSource),
                 typeof(NavMeshBuildMarkup),
+                typeof(Dictionary<string, object>)
             };
 
     [CSharpCallLua]

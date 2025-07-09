@@ -3,7 +3,7 @@ using UnityEngine;
 using UnityEditor;
 using ImmerzaSDK.Settings;
 
-[CustomPropertyDrawer(typeof(LaunchOptionValue))]
+[CustomPropertyDrawer(typeof(AdvancedLaunchOptionValue))]
 public class LaunchOptionsValueDrawer : PropertyDrawer
 {
     public override void OnGUI(Rect position, SerializedProperty property, GUIContent label)

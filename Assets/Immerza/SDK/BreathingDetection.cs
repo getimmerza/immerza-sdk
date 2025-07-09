@@ -22,6 +22,8 @@ namespace ImmerzaSDK
         private float _lastInhaleTime = 0;
         private float _lastExhaleTime = 0;
 
+        public bool ShouldVibrate { get { return shouldVibrate; } set { shouldVibrate = value; } }
+        private bool shouldVibrate = true;
 
         [Space]
         [Header("Extras")]
@@ -283,7 +285,7 @@ namespace ImmerzaSDK
 
                 return false;
             }
-            if (!isStaticScene)
+            if (!isStaticScene && shouldVibrate)
             {
                 if (isLeftHand)
                 {
@@ -374,7 +376,7 @@ namespace ImmerzaSDK
             float avgShortY = yShortBuffer.Average();
             float avgLongY = yLongBuffer.Average();
 
-            if (checkDisableTime > disableTimeContsant)
+            if (checkDisableTime > disableTimeContsant && shouldVibrate)
             {
                 holdFilterArray = 0.001f;
                 leftHandDevice.SendHapticImpulse(0, 0.01f, 0.01f);

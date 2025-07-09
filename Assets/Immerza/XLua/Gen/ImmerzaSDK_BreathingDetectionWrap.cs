@@ -21,11 +21,12 @@ namespace XLua.CSObjectWrap
         {
 			ObjectTranslator translator = ObjectTranslatorPool.Instance.Find(L);
 			System.Type type = typeof(ImmerzaSDK.BreathingDetection);
-			Utils.BeginObjectRegister(type, L, translator, 0, 0, 28, 28);
+			Utils.BeginObjectRegister(type, L, translator, 0, 0, 29, 29);
 			
 			
 			
-			Utils.RegisterFunc(L, Utils.GETTER_IDX, "inhaleTime", _g_get_inhaleTime);
+			Utils.RegisterFunc(L, Utils.GETTER_IDX, "ShouldVibrate", _g_get_ShouldVibrate);
+            Utils.RegisterFunc(L, Utils.GETTER_IDX, "inhaleTime", _g_get_inhaleTime);
             Utils.RegisterFunc(L, Utils.GETTER_IDX, "exhaleTime", _g_get_exhaleTime);
             Utils.RegisterFunc(L, Utils.GETTER_IDX, "holdTime", _g_get_holdTime);
             Utils.RegisterFunc(L, Utils.GETTER_IDX, "breathCount", _g_get_breathCount);
@@ -54,7 +55,8 @@ namespace XLua.CSObjectWrap
             Utils.RegisterFunc(L, Utils.GETTER_IDX, "countOfGoodInhale", _g_get_countOfGoodInhale);
             Utils.RegisterFunc(L, Utils.GETTER_IDX, "countOfGoodExhale", _g_get_countOfGoodExhale);
             
-			Utils.RegisterFunc(L, Utils.SETTER_IDX, "inhaleTime", _s_set_inhaleTime);
+			Utils.RegisterFunc(L, Utils.SETTER_IDX, "ShouldVibrate", _s_set_ShouldVibrate);
+            Utils.RegisterFunc(L, Utils.SETTER_IDX, "inhaleTime", _s_set_inhaleTime);
             Utils.RegisterFunc(L, Utils.SETTER_IDX, "exhaleTime", _s_set_exhaleTime);
             Utils.RegisterFunc(L, Utils.SETTER_IDX, "holdTime", _s_set_holdTime);
             Utils.RegisterFunc(L, Utils.SETTER_IDX, "breathCount", _s_set_breathCount);
@@ -133,6 +135,20 @@ namespace XLua.CSObjectWrap
         
         
         
+        
+        [MonoPInvokeCallbackAttribute(typeof(LuaCSFunction))]
+        static int _g_get_ShouldVibrate(RealStatePtr L)
+        {
+		    try {
+                ObjectTranslator translator = ObjectTranslatorPool.Instance.Find(L);
+			
+                ImmerzaSDK.BreathingDetection gen_to_be_invoked = (ImmerzaSDK.BreathingDetection)translator.FastGetCSObj(L, 1);
+                LuaAPI.lua_pushboolean(L, gen_to_be_invoked.ShouldVibrate);
+            } catch(System.Exception gen_e) {
+                return LuaAPI.luaL_error(L, "c# exception:" + gen_e);
+            }
+            return 1;
+        }
         
         [MonoPInvokeCallbackAttribute(typeof(LuaCSFunction))]
         static int _g_get_Instance(RealStatePtr L)
@@ -539,6 +555,21 @@ namespace XLua.CSObjectWrap
         }
         
         
+        
+        [MonoPInvokeCallbackAttribute(typeof(LuaCSFunction))]
+        static int _s_set_ShouldVibrate(RealStatePtr L)
+        {
+		    try {
+                ObjectTranslator translator = ObjectTranslatorPool.Instance.Find(L);
+			
+                ImmerzaSDK.BreathingDetection gen_to_be_invoked = (ImmerzaSDK.BreathingDetection)translator.FastGetCSObj(L, 1);
+                gen_to_be_invoked.ShouldVibrate = LuaAPI.lua_toboolean(L, 2);
+            
+            } catch(System.Exception gen_e) {
+                return LuaAPI.luaL_error(L, "c# exception:" + gen_e);
+            }
+            return 0;
+        }
         
         [MonoPInvokeCallbackAttribute(typeof(LuaCSFunction))]
         static int _s_set_inhaleTime(RealStatePtr L)

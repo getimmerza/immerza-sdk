@@ -36,6 +36,7 @@ namespace XLua
 				translator.RegisterPushAndGetAndUpdate<UnityEngine.Ray2D>(translator.PushUnityEngineRay2D, translator.Get, translator.UpdateUnityEngineRay2D);
 				translator.RegisterPushAndGetAndUpdate<UnityEngine.InputSystem.InputActionType>(translator.PushUnityEngineInputSystemInputActionType, translator.Get, translator.UpdateUnityEngineInputSystemInputActionType);
 				translator.RegisterPushAndGetAndUpdate<UnityEngine.InputSystem.InputActionChange>(translator.PushUnityEngineInputSystemInputActionChange, translator.Get, translator.UpdateUnityEngineInputSystemInputActionChange);
+				translator.RegisterPushAndGetAndUpdate<ImmerzaSDK.Settings.LaunchOptionValueType>(translator.PushImmerzaSDKSettingsLaunchOptionValueType, translator.Get, translator.UpdateImmerzaSDKSettingsLaunchOptionValueType);
 			
 			}
         }
@@ -740,6 +741,90 @@ namespace XLua
             }
         }
         
+        int ImmerzaSDKSettingsLaunchOptionValueType_TypeID = -1;
+		int ImmerzaSDKSettingsLaunchOptionValueType_EnumRef = -1;
+        
+        public void PushImmerzaSDKSettingsLaunchOptionValueType(RealStatePtr L, ImmerzaSDK.Settings.LaunchOptionValueType val)
+        {
+            if (ImmerzaSDKSettingsLaunchOptionValueType_TypeID == -1)
+            {
+			    bool is_first;
+                ImmerzaSDKSettingsLaunchOptionValueType_TypeID = getTypeId(L, typeof(ImmerzaSDK.Settings.LaunchOptionValueType), out is_first);
+				
+				if (ImmerzaSDKSettingsLaunchOptionValueType_EnumRef == -1)
+				{
+				    Utils.LoadCSTable(L, typeof(ImmerzaSDK.Settings.LaunchOptionValueType));
+				    ImmerzaSDKSettingsLaunchOptionValueType_EnumRef = LuaAPI.luaL_ref(L, LuaIndexes.LUA_REGISTRYINDEX);
+				}
+				
+            }
+			
+			if (LuaAPI.xlua_tryget_cachedud(L, (int)val, ImmerzaSDKSettingsLaunchOptionValueType_EnumRef) == 1)
+            {
+			    return;
+			}
+			
+            IntPtr buff = LuaAPI.xlua_pushstruct(L, 4, ImmerzaSDKSettingsLaunchOptionValueType_TypeID);
+            if (!CopyByValue.Pack(buff, 0, (int)val))
+            {
+                throw new Exception("pack fail fail for ImmerzaSDK.Settings.LaunchOptionValueType ,value="+val);
+            }
+			
+			LuaAPI.lua_getref(L, ImmerzaSDKSettingsLaunchOptionValueType_EnumRef);
+			LuaAPI.lua_pushvalue(L, -2);
+			LuaAPI.xlua_rawseti(L, -2, (int)val);
+			LuaAPI.lua_pop(L, 1);
+			
+        }
+		
+        public void Get(RealStatePtr L, int index, out ImmerzaSDK.Settings.LaunchOptionValueType val)
+        {
+		    LuaTypes type = LuaAPI.lua_type(L, index);
+            if (type == LuaTypes.LUA_TUSERDATA )
+            {
+			    if (LuaAPI.xlua_gettypeid(L, index) != ImmerzaSDKSettingsLaunchOptionValueType_TypeID)
+				{
+				    throw new Exception("invalid userdata for ImmerzaSDK.Settings.LaunchOptionValueType");
+				}
+				
+                IntPtr buff = LuaAPI.lua_touserdata(L, index);
+				int e;
+                if (!CopyByValue.UnPack(buff, 0, out e))
+                {
+                    throw new Exception("unpack fail for ImmerzaSDK.Settings.LaunchOptionValueType");
+                }
+				val = (ImmerzaSDK.Settings.LaunchOptionValueType)e;
+                
+            }
+            else
+            {
+                val = (ImmerzaSDK.Settings.LaunchOptionValueType)objectCasters.GetCaster(typeof(ImmerzaSDK.Settings.LaunchOptionValueType))(L, index, null);
+            }
+        }
+		
+        public void UpdateImmerzaSDKSettingsLaunchOptionValueType(RealStatePtr L, int index, ImmerzaSDK.Settings.LaunchOptionValueType val)
+        {
+		    
+            if (LuaAPI.lua_type(L, index) == LuaTypes.LUA_TUSERDATA)
+            {
+			    if (LuaAPI.xlua_gettypeid(L, index) != ImmerzaSDKSettingsLaunchOptionValueType_TypeID)
+				{
+				    throw new Exception("invalid userdata for ImmerzaSDK.Settings.LaunchOptionValueType");
+				}
+				
+                IntPtr buff = LuaAPI.lua_touserdata(L, index);
+                if (!CopyByValue.Pack(buff, 0,  (int)val))
+                {
+                    throw new Exception("pack fail for ImmerzaSDK.Settings.LaunchOptionValueType ,value="+val);
+                }
+            }
+			
+            else
+            {
+                throw new Exception("try to update a data with lua type:" + LuaAPI.lua_type(L, index));
+            }
+        }
+        
         
 		// table cast optimze
 		
@@ -811,6 +896,12 @@ namespace XLua
 				translator.PushUnityEngineInputSystemInputActionChange(L, array[index]);
 				return true;
 			}
+			else if (type == typeof(ImmerzaSDK.Settings.LaunchOptionValueType[]))
+			{
+			    ImmerzaSDK.Settings.LaunchOptionValueType[] array = obj as ImmerzaSDK.Settings.LaunchOptionValueType[];
+				translator.PushImmerzaSDKSettingsLaunchOptionValueType(L, array[index]);
+				return true;
+			}
             return false;
 		}
 		
@@ -874,6 +965,12 @@ namespace XLua
 			else if (type == typeof(UnityEngine.InputSystem.InputActionChange[]))
 			{
 			    UnityEngine.InputSystem.InputActionChange[] array = obj as UnityEngine.InputSystem.InputActionChange[];
+				translator.Get(L, obj_idx, out array[array_idx]);
+				return true;
+			}
+			else if (type == typeof(ImmerzaSDK.Settings.LaunchOptionValueType[]))
+			{
+			    ImmerzaSDK.Settings.LaunchOptionValueType[] array = obj as ImmerzaSDK.Settings.LaunchOptionValueType[];
 				translator.Get(L, obj_idx, out array[array_idx]);
 				return true;
 			}
